@@ -15,7 +15,7 @@ const Header = () => {
           <div className="flex items-center justify-center w-10 h-10 bg-gradient-primary rounded-lg shadow-soft">
             <FileText className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="font-bold text-xl text-foreground">PDFTools</span>
+          <span className="font-bold text-xl text-foreground">convertingpdf</span>
         </div>
 
         {/* Desktop Navigation */}

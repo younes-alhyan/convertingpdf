@@ -41,7 +41,7 @@ const Footer = () => {
               <div className="flex items-center justify-center w-10 h-10 bg-gradient-primary rounded-lg shadow-soft">
                 <FileText className="h-6 w-6 text-primary-foreground" />
               </div>
-              <span className="font-bold text-xl">PDFTools</span>
+              <span className="font-bold text-xl">convertingpdf</span>
             </div>
             <p className="text-background/70 leading-relaxed max-w-md">
               Professional PDF tools for everyone. Fast, secure, and reliable document processing 
@@ -107,7 +107,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-background/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-background/60 text-sm">
-            © 2024 PDFTools. All rights reserved.
+            © 2024 convertingpdf. All rights reserved.
           </p>
           <p className="text-background/60 text-sm">
             Built with ❤️ for document productivity
