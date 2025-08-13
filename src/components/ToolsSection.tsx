@@ -84,7 +84,13 @@ const ToolsSection = () => {
                 <CardDescription className="text-muted-foreground leading-relaxed">
                   {tool.description}
                 </CardDescription>
-                <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <Button 
+                  variant="outline" 
+                  className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  onClick={() => {
+                    alert(`${tool.title} tool coming soon! Backend integration in progress.`);
+                  }}
+                >
                   Start Now
                 </Button>
               </CardContent>
@@ -93,7 +99,13 @@ const ToolsSection = () => {
         </div>
 
         <div className="text-center mt-16">
-          <Button variant="default" size="lg">
+          <Button 
+            variant="default" 
+            size="lg"
+            onClick={() => {
+              alert('All tools page coming soon! Individual tools will be available after backend setup.');
+            }}
+          >
             View All Tools
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

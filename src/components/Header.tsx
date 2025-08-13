@@ -39,8 +39,22 @@ const Header = () => {
 
         {/* Auth Buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          <Button variant="ghost">Login</Button>
-          <Button variant="default">Sign Up</Button>
+          <Button 
+            variant="ghost"
+            onClick={() => {
+              alert('Login functionality will be available after backend setup!');
+            }}
+          >
+            Login
+          </Button>
+          <Button 
+            variant="default"
+            onClick={() => {
+              alert('Sign up functionality will be available after backend setup!');
+            }}
+          >
+            Sign Up
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -74,8 +88,24 @@ const Header = () => {
               Contact
             </a>
             <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-              <Button variant="ghost" className="justify-start">Login</Button>
-              <Button variant="default" className="justify-start">Sign Up</Button>
+              <Button 
+                variant="ghost" 
+                className="justify-start"
+                onClick={() => {
+                  alert('Login functionality will be available after backend setup!');
+                }}
+              >
+                Login
+              </Button>
+              <Button 
+                variant="default" 
+                className="justify-start"
+                onClick={() => {
+                  alert('Sign up functionality will be available after backend setup!');
+                }}
+              >
+                Sign Up
+              </Button>
             </div>
           </nav>
         </div>

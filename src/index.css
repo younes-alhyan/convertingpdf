@@ -127,3 +127,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Additional animations for the website */
+@layer utilities {
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+}

@@ -34,11 +34,25 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Button variant="hero" size="xl" className="group">
+            <Button 
+              variant="hero" 
+              size="xl" 
+              className="group"
+              onClick={() => {
+                document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               Start for Free
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button variant="outline" size="lg" className="group">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="group"
+              onClick={() => {
+                alert('Demo coming soon! For now, scroll down to see our tools.');
+              }}
+            >
               <Play className="mr-2 h-4 w-4" />
               Watch Demo
             </Button>
