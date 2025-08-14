@@ -1,9 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Menu, X } from "lucide-react";
+import { FileText, Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -11,12 +21,12 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center space-x-2">
           <div className="flex items-center justify-center w-10 h-10 bg-gradient-primary rounded-lg shadow-soft">
             <FileText className="h-6 w-6 text-primary-foreground" />
           </div>
           <span className="font-bold text-xl text-foreground">convertingpdf</span>
-        </div>
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
@@ -37,24 +47,38 @@ const Header = () => {
           </a>
         </nav>
 
-        {/* Auth Buttons */}
+        {/* Auth Section */}
         <div className="hidden md:flex items-center space-x-4">
-          <Button 
-            variant="ghost"
-            onClick={() => {
-              alert('Login functionality will be available after backend setup!');
-            }}
-          >
-            Login
-          </Button>
-          <Button 
-            variant="default"
-            onClick={() => {
-              alert('Sign up functionality will be available after backend setup!');
-            }}
-          >
-            Sign Up
-          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center space-x-2">
+                  <User className="h-4 w-4" />
+                  <span className="max-w-32 truncate">{user.email}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem disabled>
+                  <User className="mr-2 h-4 w-4" />
+                  {user.email}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to="/auth">Login</Link>
+              </Button>
+              <Button variant="default" asChild>
+                <Link to="/auth">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -88,24 +112,30 @@ const Header = () => {
               Contact
             </a>
             <div className="flex flex-col space-y-2 pt-4 border-t border-border">
-              <Button 
-                variant="ghost" 
-                className="justify-start"
-                onClick={() => {
-                  alert('Login functionality will be available after backend setup!');
-                }}
-              >
-                Login
-              </Button>
-              <Button 
-                variant="default" 
-                className="justify-start"
-                onClick={() => {
-                  alert('Sign up functionality will be available after backend setup!');
-                }}
-              >
-                Sign Up
-              </Button>
+              {user ? (
+                <>
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    {user.email}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    className="justify-start"
+                    onClick={signOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" className="justify-start" asChild>
+                    <Link to="/auth">Login</Link>
+                  </Button>
+                  <Button variant="default" className="justify-start" asChild>
+                    <Link to="/auth">Sign Up</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </div>
