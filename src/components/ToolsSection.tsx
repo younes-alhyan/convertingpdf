@@ -88,7 +88,12 @@ const ToolsSection = () => {
                   variant="outline" 
                   className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                   onClick={() => {
-                    alert(`${tool.title} tool coming soon! Backend integration in progress.`);
+                    if (tool.title === "Merge PDF") {
+                      // Navigate to merge tool
+                      window.location.href = "/tools/merge";
+                    } else {
+                      alert(`${tool.title} tool coming soon! Backend integration in progress.`);
+                    }
                   }}
                 >
                   Start Now
