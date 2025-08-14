@@ -20,13 +20,16 @@ import {
   Loader2,
   Settings
 } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
 
-interface ConvertedPage {
+// Set the worker source
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+interface ConvertedImage {
   pageNumber: number;
+  imageUrl: string;
+  blob: Blob;
   filename: string;
-  storagePath: string;
-  size: number;
-  imageUrl?: string;
 }
 
 const PDFToJPG = () => {
@@ -34,9 +37,8 @@ const PDFToJPG = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<any>(null);
-  const [convertedPages, setConvertedPages] = useState<ConvertedPage[]>([]);
-  const [quality, setQuality] = useState("80");
+  const [convertedImages, setConvertedImages] = useState<ConvertedImage[]>([]);
+  const [quality, setQuality] = useState("0.8");
   const [pageRange, setPageRange] = useState("all");
   const [customRange, setCustomRange] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,8 +48,7 @@ const PDFToJPG = () => {
     
     if (file && file.type === 'application/pdf') {
       setSelectedFile(file);
-      setResult(null);
-      setConvertedPages([]);
+      setConvertedImages([]);
     } else {
       toast({
         title: "Invalid File",
@@ -62,8 +63,7 @@ const PDFToJPG = () => {
 
   const removeFile = useCallback(() => {
     setSelectedFile(null);
-    setResult(null);
-    setConvertedPages([]);
+    setConvertedImages([]);
   }, []);
 
   const convertPDFToJPG = async () => {
@@ -87,54 +87,143 @@ const PDFToJPG = () => {
 
     setIsProcessing(true);
     setProgress(10);
+    setConvertedImages([]);
 
     try {
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('quality', quality);
-      formData.append('pageRange', pageRange === 'custom' ? customRange : pageRange);
+      console.log('Starting PDF to JPG conversion...');
+      
+      // Load the PDF
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pageCount = pdf.numPages;
 
-      setProgress(30);
+      console.log(`PDF has ${pageCount} pages`);
+      setProgress(20);
 
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
-      }
-
-      setProgress(50);
-
-      // Call the conversion function
-      const { data, error } = await supabase.functions.invoke('pdf-to-jpg', {
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
+      // Determine which pages to convert
+      let pagesToConvert: number[] = [];
+      if (pageRange === 'all') {
+        pagesToConvert = Array.from({ length: pageCount }, (_, i) => i + 1);
+      } else if (pageRange.includes('-')) {
+        const [start, end] = pageRange.split('-').map(n => parseInt(n.trim()));
+        for (let i = Math.max(1, start); i <= Math.min(pageCount, end); i++) {
+          pagesToConvert.push(i);
         }
-      });
-
-      setProgress(80);
-
-      if (error) {
-        console.error('Function error:', error);
-        throw new Error(error.message || 'Failed to convert PDF');
+      } else {
+        const pageNum = parseInt(pageRange);
+        if (pageNum >= 1 && pageNum <= pageCount) {
+          pagesToConvert = [pageNum];
+        }
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Conversion operation failed');
+      if (pagesToConvert.length === 0) {
+        throw new Error('No valid pages to convert');
       }
 
+      console.log(`Converting pages: ${pagesToConvert.join(', ')}`);
+
+      const images: ConvertedImage[] = [];
+      const qualityValue = parseFloat(quality);
+
+      // Convert each page to JPG
+      for (let i = 0; i < pagesToConvert.length; i++) {
+        const pageNum = pagesToConvert[i];
+        console.log(`Converting page ${pageNum}...`);
+
+        try {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
+
+          // Create canvas
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          if (!context) {
+            throw new Error('Could not get canvas context');
+          }
+
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Render page to canvas
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport,
+            canvas: canvas,
+          };
+
+          await page.render(renderContext).promise;
+
+          // Convert canvas to JPG blob
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error('Failed to create blob'));
+                }
+              },
+              'image/jpeg',
+              qualityValue
+            );
+          });
+
+          const imageUrl = URL.createObjectURL(blob);
+          const filename = `${selectedFile.name.replace('.pdf', '')}_page_${pageNum}.jpg`;
+
+          images.push({
+            pageNumber: pageNum,
+            imageUrl,
+            blob,
+            filename
+          });
+
+          // Update progress
+          const progressValue = 20 + (70 * (i + 1)) / pagesToConvert.length;
+          setProgress(progressValue);
+
+        } catch (pageError) {
+          console.error(`Error converting page ${pageNum}:`, pageError);
+          toast({
+            title: "Page Conversion Error",
+            description: `Failed to convert page ${pageNum}`,
+            variant: "destructive"
+          });
+        }
+      }
+
+      if (images.length === 0) {
+        throw new Error('Failed to convert any pages');
+      }
+
+      setConvertedImages(images);
       setProgress(100);
-      setResult(data);
 
-      // Convert the PDF pages to images on the frontend
-      if (data.pages && data.pages.length > 0) {
-        await convertPagesToImages(data.pages);
+      // Save conversion record to database
+      try {
+        const conversionData = {
+          user_id: user.id,
+          original_filename: selectedFile.name,
+          converted_filename: `${selectedFile.name.replace('.pdf', '')}_images.zip`,
+          conversion_type: 'pdf-to-jpg',
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          file_size: selectedFile.size,
+          storage_path: `local_conversion_${Date.now()}` // Mark as local conversion
+        };
+
+        await supabase
+          .from('pdf_conversions')
+          .insert(conversionData);
+
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        // Don't fail the conversion if DB save fails
       }
 
       toast({
         title: "Success!",
-        description: data.message || "PDF has been converted to images successfully",
+        description: `Successfully converted ${images.length} page(s) to JPG`,
       });
 
     } catch (error: any) {
@@ -150,69 +239,35 @@ const PDFToJPG = () => {
     }
   };
 
-  const convertPagesToImages = async (pages: ConvertedPage[]) => {
-    const pagesWithImages: ConvertedPage[] = [];
-
-    for (const page of pages) {
-      try {
-        // Download the single-page PDF
-        const { data: pdfData } = await supabase.storage
-          .from('pdf-converted')
-          .download(page.storagePath);
-
-        if (pdfData) {
-          // For now, we'll store the PDF data as a blob URL
-          // In a real implementation, you'd use PDF.js to render to canvas
-          const blob = new Blob([pdfData], { type: 'application/pdf' });
-          const url = URL.createObjectURL(blob);
-          
-          pagesWithImages.push({
-            ...page,
-            imageUrl: url
-          });
-        }
-      } catch (error) {
-        console.error('Error processing page', page.pageNumber, ':', error);
-      }
-    }
-
-    setConvertedPages(pagesWithImages);
-  };
-
-  const downloadPage = async (page: ConvertedPage) => {
-    if (!page.imageUrl) return;
-
+  const downloadImage = (image: ConvertedImage) => {
     try {
-      // Create a download link
       const a = document.createElement('a');
-      a.href = page.imageUrl;
-      a.download = `page_${page.pageNumber}.pdf`; // For now downloading as PDF
+      a.href = image.imageUrl;
+      a.download = image.filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
 
       toast({
         title: "Downloaded",
-        description: `Page ${page.pageNumber} has been downloaded`,
+        description: `${image.filename} has been downloaded`,
       });
 
     } catch (error: any) {
       console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: error.message || "Failed to download page",
+        description: error.message || "Failed to download image",
         variant: "destructive"
       });
     }
   };
 
-  const downloadAllPages = async () => {
-    for (const page of convertedPages) {
-      if (page.imageUrl) {
-        await downloadPage(page);
-        // Add a small delay between downloads
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+  const downloadAllImages = async () => {
+    for (const image of convertedImages) {
+      downloadImage(image);
+      // Add a small delay between downloads
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
   };
 
@@ -312,10 +367,10 @@ const PDFToJPG = () => {
                     <SelectValue placeholder="Select quality" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="60">Low (60%)</SelectItem>
-                    <SelectItem value="80">Medium (80%)</SelectItem>
-                    <SelectItem value="90">High (90%)</SelectItem>
-                    <SelectItem value="100">Maximum (100%)</SelectItem>
+                    <SelectItem value="0.6">Low (60%)</SelectItem>
+                    <SelectItem value="0.8">Medium (80%)</SelectItem>
+                    <SelectItem value="0.9">High (90%)</SelectItem>
+                    <SelectItem value="1.0">Maximum (100%)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -359,7 +414,7 @@ const PDFToJPG = () => {
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Converting PDF...
+                  Converting to JPG...
                 </>
               ) : (
                 <>
@@ -379,8 +434,8 @@ const PDFToJPG = () => {
             {isProcessing && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Processing...</span>
-                  <span>{progress}%</span>
+                  <span>Converting to JPG...</span>
+                  <span>{Math.round(progress)}%</span>
                 </div>
                 <Progress value={progress} className="w-full" />
               </div>
@@ -390,7 +445,7 @@ const PDFToJPG = () => {
       )}
 
       {/* Results */}
-      {result && convertedPages.length > 0 && (
+      {convertedImages.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -398,40 +453,42 @@ const PDFToJPG = () => {
               <span>Conversion Completed</span>
             </CardTitle>
             <CardDescription>
-              {convertedPages.length} page(s) have been converted successfully.
+              {convertedImages.length} page(s) have been converted to JPG images successfully.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Badge variant="secondary">
-                {convertedPages.length} page(s) converted
+                {convertedImages.length} JPG image(s) created
               </Badge>
-              <Button onClick={downloadAllPages} variant="outline">
+              <Button onClick={downloadAllImages} variant="outline">
                 <Download className="h-4 w-4 mr-2" />
-                Download All
+                Download All JPGs
               </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {convertedPages.map((page) => (
-                <div key={page.pageNumber} className="border rounded-lg p-4 space-y-3">
-                  <div className="aspect-[3/4] bg-secondary/50 rounded flex items-center justify-center">
-                    <div className="text-center space-y-2">
-                      <FileText className="h-8 w-8 text-primary mx-auto" />
-                      <p className="text-sm font-medium">Page {page.pageNumber}</p>
-                    </div>
+              {convertedImages.map((image) => (
+                <div key={image.pageNumber} className="border rounded-lg p-4 space-y-3">
+                  <div className="aspect-[3/4] bg-secondary/50 rounded overflow-hidden">
+                    <img 
+                      src={image.imageUrl} 
+                      alt={`Page ${image.pageNumber}`}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <div className="space-y-2">
+                    <p className="text-sm font-medium">Page {image.pageNumber}</p>
                     <p className="text-sm text-muted-foreground">
-                      Size: {(page.size / 1024).toFixed(1)} KB
+                      {image.filename}
                     </p>
                     <Button 
                       size="sm" 
                       className="w-full"
-                      onClick={() => downloadPage(page)}
+                      onClick={() => downloadImage(image)}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Download
+                      Download JPG
                     </Button>
                   </div>
                 </div>
@@ -449,10 +506,11 @@ const PDFToJPG = () => {
             <div className="space-y-1">
               <p className="text-sm font-medium">Important Notes:</p>
               <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Images are converted directly in your browser for privacy</li>
                 <li>• Higher quality settings result in larger file sizes</li>
-                <li>• Files are processed securely and automatically deleted after download</li>
-                <li>• Maximum file size: 10MB for free accounts</li>
-                <li>• Converted images maintain original PDF resolution</li>
+                <li>• Files are processed locally and not uploaded to servers</li>
+                <li>• Maximum file size: 50MB for optimal performance</li>
+                <li>• Output format: High-quality JPG images</li>
               </ul>
             </div>
           </div>
