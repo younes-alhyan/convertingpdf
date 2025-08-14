@@ -7,14 +7,97 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      convertingpdf: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      pdf_conversions: {
+        Row: {
+          completed_at: string | null
+          conversion_type: string
+          converted_filename: string | null
+          created_at: string
+          file_size: number | null
+          id: string
+          original_filename: string
+          status: string
+          storage_path: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          conversion_type: string
+          converted_filename?: string | null
+          created_at?: string
+          file_size?: number | null
+          id?: string
+          original_filename: string
+          status?: string
+          storage_path?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          conversion_type?: string
+          converted_filename?: string | null
+          created_at?: string
+          file_size?: number | null
+          id?: string
+          original_filename?: string
+          status?: string
+          storage_path?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
