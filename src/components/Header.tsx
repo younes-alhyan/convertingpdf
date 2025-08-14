@@ -30,21 +30,23 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
+          <Link to="/" className="text-foreground hover:text-primary transition-colors font-medium">
             Home
-          </a>
-          <a href="#tools" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+          </Link>
+          {user && (
+            <Link to="/dashboard" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+              Dashboard
+            </Link>
+          )}
+          <a href="/#tools" className="text-muted-foreground hover:text-primary transition-colors font-medium">
             Tools
           </a>
-          <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors font-medium">
-            Pricing
-          </a>
-          <a href="#blog" className="text-muted-foreground hover:text-primary transition-colors font-medium">
-            Blog
-          </a>
-          <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+          <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+            About
+          </Link>
+          <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors font-medium">
             Contact
-          </a>
+          </Link>
         </nav>
 
         {/* Auth Section */}
@@ -58,8 +60,14 @@ const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard">
+                    <User className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem disabled>
-                  <User className="mr-2 h-4 w-4" />
+                  <span className="mr-2 text-xs">●</span>
                   {user.email}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -96,21 +104,23 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t border-border bg-background">
           <nav className="container py-4 space-y-4">
-            <a href="#" className="block text-foreground hover:text-primary transition-colors font-medium">
+            <Link to="/" className="block text-foreground hover:text-primary transition-colors font-medium">
               Home
-            </a>
-            <a href="#tools" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
+            </Link>
+            {user && (
+              <Link to="/dashboard" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
+                Dashboard
+              </Link>
+            )}
+            <a href="/#tools" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
               Tools
             </a>
-            <a href="#pricing" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
-              Pricing
-            </a>
-            <a href="#blog" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
-              Blog
-            </a>
-            <a href="#contact" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
+            <Link to="/about" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
+              About
+            </Link>
+            <Link to="/contact" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
               Contact
-            </a>
+            </Link>
             <div className="flex flex-col space-y-2 pt-4 border-t border-border">
               {user ? (
                 <>
