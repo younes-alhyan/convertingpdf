@@ -50,6 +50,9 @@
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(217 89% 98%));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(217 20% 98%));
     
+    /* Missing CSS variables that are used in components */
+    --primary-variant: 217 89% 42%;
+    
     /* Shadows */
     --shadow-soft: 0 2px 8px hsl(217 89% 52% / 0.08);
     --shadow-medium: 0 4px 16px hsl(217 89% 52% / 0.12);
