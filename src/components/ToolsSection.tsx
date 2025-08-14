@@ -89,8 +89,9 @@ const ToolsSection = () => {
                   className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                   onClick={() => {
                     if (tool.title === "Merge PDF") {
-                      // Navigate to merge tool
                       window.location.href = "/tools/merge";
+                    } else if (tool.title === "PDF to JPG") {
+                      window.location.href = "/tools/pdf-to-jpg";
                     } else {
                       alert(`${tool.title} tool coming soon! Backend integration in progress.`);
                     }
