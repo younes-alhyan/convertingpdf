@@ -90,9 +90,9 @@ const PDFToJPG = () => {
     setConvertedImages([]);
 
     try {
-      console.log('Starting PDF to JPG conversion...');
+      console.log('Starting client-side PDF to JPG conversion...');
       
-      // Load the PDF
+      // Load the PDF using PDF.js
       const arrayBuffer = await selectedFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const pageCount = pdf.numPages;
@@ -100,17 +100,19 @@ const PDFToJPG = () => {
       console.log(`PDF has ${pageCount} pages`);
       setProgress(20);
 
-      // Determine which pages to convert
+      // Determine which pages to convert based on settings
       let pagesToConvert: number[] = [];
-      if (pageRange === 'all') {
+      const actualPageRange = pageRange === 'custom' ? customRange : pageRange;
+      
+      if (actualPageRange === 'all') {
         pagesToConvert = Array.from({ length: pageCount }, (_, i) => i + 1);
-      } else if (pageRange.includes('-')) {
-        const [start, end] = pageRange.split('-').map(n => parseInt(n.trim()));
+      } else if (actualPageRange.includes('-')) {
+        const [start, end] = actualPageRange.split('-').map(n => parseInt(n.trim()));
         for (let i = Math.max(1, start); i <= Math.min(pageCount, end); i++) {
           pagesToConvert.push(i);
         }
       } else {
-        const pageNum = parseInt(pageRange);
+        const pageNum = parseInt(actualPageRange);
         if (pageNum >= 1 && pageNum <= pageCount) {
           pagesToConvert = [pageNum];
         }
