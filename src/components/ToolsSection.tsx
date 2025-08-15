@@ -90,6 +90,8 @@ const ToolsSection = () => {
                   onClick={() => {
                     if (tool.title === "Merge PDF") {
                       window.location.href = "/tools/merge";
+                    } else if (tool.title === "Split PDF") {
+                      window.location.href = "/tools/split";
                     } else if (tool.title === "PDF to JPG") {
                       window.location.href = "/tools/pdf-to-jpg";
                     } else {
