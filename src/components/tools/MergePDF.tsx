@@ -150,19 +150,24 @@ const MergePDF = () => {
         throw new Error('No valid session');
       }
 
-      const { data, error } = await supabase.functions.invoke('download-file', {
-        body: { conversionId: result.conversion.id },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
+      const response = await fetch(
+        `https://qhmllrbocnungavzdswn.supabase.co/functions/v1/download-file/${result.conversion.id}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
-      if (error) {
-        throw new Error(error.message || 'Download failed');
+      if (!response.ok) {
+        throw new Error(`Edge Function returned a non-2xx status code: ${response.status}`);
       }
 
+      const blob = await response.blob();
+
       // Create download link
-      const blob = new Blob([data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
