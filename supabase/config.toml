@@ -52,6 +52,9 @@ verify_jwt = true
 [functions.compress-pdf]
 verify_jwt = true
 
+[functions.pdf-to-word]
+verify_jwt = true
+
 [edge_runtime]
 enabled = true
 port = 54329
