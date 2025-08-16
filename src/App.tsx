@@ -11,6 +11,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import MergePDFPage from "./pages/tools/MergePDFPage";
 import SplitPDFPage from "./pages/tools/SplitPDFPage";
+import CompressPDFPage from "./pages/tools/CompressPDFPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/tools/merge" element={<MergePDFPage />} />
             <Route path="/tools/split" element={<SplitPDFPage />} />
+            <Route path="/tools/compress" element={<CompressPDFPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

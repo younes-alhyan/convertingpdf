@@ -94,6 +94,8 @@ const ToolsSection = () => {
                       window.location.href = "/tools/split";
                     } else if (tool.title === "PDF to JPG") {
                       window.location.href = "/tools/pdf-to-jpg";
+                    } else if (tool.title === "Compress PDF") {
+                      window.location.href = "/tools/compress";
                     } else {
                       alert(`${tool.title} tool coming soon! Backend integration in progress.`);
                     }
