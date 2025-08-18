@@ -156,8 +156,15 @@ const SplitPDF = () => {
       setResult(data);
 
       const zipFile = await fetch(data.downloadUrl);
-      const zipBlob = await zipFile.blob();
-      const zip = await JSZip.loadAsync(zipBlob);
+
+      if (!zipFile.ok) {
+        const errText = await zipFile.text();
+        console.error("Download failed:", errText);
+        throw new Error(`Failed to fetch zip: ${zipFile.status}`);
+      }
+
+      const arrayBuffer = await zipFile.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
 
       const files: SplitFile[] = [];
       const ranges = splitType === "ranges" ? splitValue.split(",") : [];

@@ -170,10 +170,17 @@ const CompressPDF = () => {
     }
   };
 
-  const downloadFile = () => {
+  const downloadFile = async () => {
     if (!result || !result.downloadUrl) return;
+    // Fetch the file as a blob
+    const response = await fetch(result.downloadUrl);
+    if (!response.ok) throw new Error("Failed to fetch file");
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
-    link.href = result.downloadUrl;
+    link.href = url;
     link.download = result.converted_filename;
     document.body.appendChild(link);
     link.click();
@@ -399,7 +406,7 @@ const CompressPDF = () => {
                   </div>
                 </div>
                 <Button
-                  onClick={() => downloadFile()}
+                  onClick={downloadFile}
                   className="flex items-center space-x-2"
                 >
                   <Download className="h-4 w-4" />

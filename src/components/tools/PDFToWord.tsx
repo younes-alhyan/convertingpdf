@@ -32,7 +32,7 @@ interface Result {
 }
 
 const PDFToWord = () => {
-  const { user,session } = useAuth();
+  const { user, session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -107,7 +107,7 @@ const PDFToWord = () => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "X-User-ID":user.id
+          "X-User-ID": user.id,
         },
         body: formData,
       });
@@ -143,11 +143,17 @@ const PDFToWord = () => {
     }
   };
 
-  const downloadFile = () => {
+  const downloadFile = async () => {
     if (!result) return;
+    // Fetch the file as a blob
+    const response = await fetch(result.downloadUrl);
+    if (!response.ok) throw new Error("Failed to fetch file");
 
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    
     const link = document.createElement("a");
-    link.href = result.downloadUrl;
+    link.href = url;
     link.download = result.converted_filename;
     document.body.appendChild(link);
     link.click();
