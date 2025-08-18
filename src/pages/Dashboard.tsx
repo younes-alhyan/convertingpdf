@@ -35,7 +35,7 @@ interface Conversion {
   created_at: string;
   completed_at: string | null;
   file_size: number | null;
-  storage_path: string | null;
+  download_url: string | null;
 }
 
 const tools = [
@@ -88,12 +88,19 @@ const Dashboard = () => {
   const [conversions, setConversions] = useState<Conversion[]>([]);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    if (session) {
+      setLoading(true);
+      fetchConversions();
+    }
+  }, [session]);
+
   const fetchConversions = async () => {
     try {
-      const token = await session?.token; // if using Firebase / Supabase JWT auth
+      const token = session?.token;
       const res = await fetch("/api/conversions", {
         headers: {
-          Authorization: `${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -113,6 +120,15 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const download = (url: string, filename: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename; // desired file name
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getStatusIcon = (status: string) => {
@@ -288,9 +304,9 @@ const Dashboard = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  window.open(
-                                    `/api/download/${conversion.id}`,
-                                    "_blank"
+                                  download(
+                                    conversion.download_url,
+                                    conversion.converted_filename
                                   );
                                 }}
                               >
