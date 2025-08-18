@@ -50,7 +50,7 @@ interface Result {
 }
 
 const SplitPDF = () => {
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -139,6 +139,7 @@ const SplitPDF = () => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "X-User-ID": user.id,
         },
         body: formData,
       });

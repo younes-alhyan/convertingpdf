@@ -38,7 +38,7 @@ interface SelectedFile {
 }
 
 const MergePDF = () => {
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -113,6 +113,7 @@ const MergePDF = () => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "X-User-ID": user.id,
         },
         body: formData,
       });

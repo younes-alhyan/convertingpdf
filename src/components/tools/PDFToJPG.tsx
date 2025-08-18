@@ -41,7 +41,7 @@ interface Result {
 }
 
 const PDFToJPGServer = () => {
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -98,7 +98,10 @@ const PDFToJPGServer = () => {
 
       const response = await fetch("/api/pdf-to-jpg", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-User-ID": user.id,
+        },
         body: formData,
       });
 

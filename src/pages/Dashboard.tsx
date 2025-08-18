@@ -84,7 +84,7 @@ const tools = [
 ];
 
 const Dashboard = () => {
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const [conversions, setConversions] = useState<Conversion[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -101,6 +101,7 @@ const Dashboard = () => {
       const res = await fetch("/api/conversions", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "X-User-ID": user.id,
         },
       });
 

@@ -37,7 +37,7 @@ interface Result {
   message: string;
 }
 const CompressPDF = () => {
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [compressionRatio, setCompressionRatio] = useState<number | null>(null);
@@ -131,6 +131,7 @@ const CompressPDF = () => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "X-User-ID": user.id,
         },
         body: formData,
       });

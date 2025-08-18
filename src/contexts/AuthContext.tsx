@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 interface User {
+  id: string;
   email: string;
   fullName?: string;
 }
@@ -79,7 +80,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (data.error) return { error: data.error };
 
-      const userObj: User = { email: data.email, fullName: data.fullName };
+      const userObj: User = {
+        id: data.id,
+        email: data.email,
+        fullName: data.fullName,
+      };
       const sessionObj: Session = { token: data.token };
 
       setUser(userObj);

@@ -32,7 +32,7 @@ interface Result {
 }
 
 const PDFToWord = () => {
-  const { session } = useAuth();
+  const { user,session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -107,6 +107,7 @@ const PDFToWord = () => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "X-User-ID":user.id
         },
         body: formData,
       });
