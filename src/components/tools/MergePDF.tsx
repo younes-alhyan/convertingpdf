@@ -1,22 +1,34 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { 
-  Upload, 
-  FileText, 
-  X, 
-  Download, 
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
+import {
+  Upload,
+  FileText,
+  X,
+  Download,
   Combine,
   AlertCircle,
   CheckCircle,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
+
+interface MergingResult {
+  filename: string;
+  file_size: number;
+  message: string;
+  downloadUrl: string;
+}
 
 interface SelectedFile {
   file: File;
@@ -24,47 +36,50 @@ interface SelectedFile {
 }
 
 const MergePDF = () => {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<MergingResult>(null);
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    
-    // Filter only PDF files
-    const pdfFiles = files.filter(file => file.type === 'application/pdf');
-    
-    if (pdfFiles.length !== files.length) {
-      toast({
-        title: "Invalid Files",
-        description: "Only PDF files are allowed",
-        variant: "destructive"
-      });
-    }
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
 
-    const newFiles: SelectedFile[] = pdfFiles.map(file => ({
-      file,
-      id: Math.random().toString(36).substr(2, 9)
-    }));
+      // Filter only PDF files
+      const pdfFiles = files.filter((file) => file.type === "application/pdf");
 
-    setSelectedFiles(prev => [...prev, ...newFiles]);
-    
-    // Reset the input
-    event.target.value = '';
-  }, []);
+      if (pdfFiles.length !== files.length) {
+        toast({
+          title: "Invalid Files",
+          description: "Only PDF files are allowed",
+          variant: "destructive",
+        });
+      }
+
+      const newFiles: SelectedFile[] = pdfFiles.map((file) => ({
+        file,
+        id: Math.random().toString(36).substr(2, 9),
+      }));
+
+      setSelectedFiles((prev) => [...prev, ...newFiles]);
+
+      // Reset the input
+      event.target.value = "";
+    },
+    []
+  );
 
   const removeFile = useCallback((id: string) => {
-    setSelectedFiles(prev => prev.filter(file => file.id !== id));
+    setSelectedFiles((prev) => prev.filter((file) => file.id !== id));
   }, []);
 
   const mergePDFs = async () => {
-    if (!user) {
+    if (!session) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to use this tool",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -73,7 +88,7 @@ const MergePDF = () => {
       toast({
         title: "More Files Needed",
         description: "Select at least 2 PDF files to merge",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -85,40 +100,39 @@ const MergePDF = () => {
       // Prepare form data
       const formData = new FormData();
       selectedFiles.forEach(({ file }) => {
-        formData.append('files', file);
+        formData.append("files", file);
       });
 
       setProgress(30);
 
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
-      }
+      const token = session.token;
 
-      setProgress(50);
-
-      // Call the merge function
-      const { data, error } = await supabase.functions.invoke('merge-pdf', {
-        body: formData,
+      const response = await fetch("/api/merge-pdf", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        }
+          Authorization: token,
+        },
+        body: formData,
       });
 
-      setProgress(80);
+      setProgress(70);
 
-      if (error) {
-        console.error('Function error:', error);
-        throw new Error(error.message || 'Failed to merge PDFs');
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Merging failed");
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Merge operation failed');
-      }
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+
+      setResult({
+        filename: "merged.pdf",
+        file_size: blob.size,
+        message: "Merging Completed",
+        downloadUrl,
+      });
 
       setProgress(100);
-      setResult(data);
 
       toast({
         title: "Success!",
@@ -127,13 +141,12 @@ const MergePDF = () => {
 
       // Clear files after successful merge
       setSelectedFiles([]);
-
-    } catch (error: any) {
-      console.error('Merge error:', error);
+    } catch (error) {
+      console.error("Merge error:", error);
       toast({
         title: "Merge Failed",
         description: error.message || "Failed to merge PDFs. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
@@ -141,55 +154,14 @@ const MergePDF = () => {
     }
   };
 
-  const downloadFile = async () => {
-    if (!result?.conversion?.id || !user) return;
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
-      }
-
-      const response = await fetch(
-        `https://qhmllrbocnungavzdswn.supabase.co/functions/v1/download-file/${result.conversion.id}`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Edge Function returned a non-2xx status code: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = result.conversion.converted_filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: "Downloaded",
-        description: "Your merged PDF has been downloaded",
-      });
-
-    } catch (error: any) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download Failed",
-        description: error.message || "Failed to download file",
-        variant: "destructive"
-      });
-    }
+  const downloadFile = async (result: MergingResult) => {
+    if (!result.downloadUrl) return;
+    const link = document.createElement("a");
+    link.href = result.downloadUrl;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -202,7 +174,8 @@ const MergePDF = () => {
           </div>
           <CardTitle className="text-2xl">Merge PDF Files</CardTitle>
           <CardDescription>
-            Combine multiple PDF files into a single document. Upload your files and merge them in seconds.
+            Combine multiple PDF files into a single document. Upload your files
+            and merge them in seconds.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -212,7 +185,8 @@ const MergePDF = () => {
         <CardHeader>
           <CardTitle className="text-lg">Select PDF Files</CardTitle>
           <CardDescription>
-            Choose 2 or more PDF files to merge. Files will be combined in the order they are added.
+            Choose 2 or more PDF files to merge. Files will be combined in the
+            order they are added.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -238,7 +212,10 @@ const MergePDF = () => {
                   />
                 </label>
               </div>
-              <Button variant="outline" onClick={() => document.getElementById('pdf-upload')?.click()}>
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById("pdf-upload")?.click()}
+              >
                 <Upload className="h-4 w-4 mr-2" />
                 Select Files
               </Button>
@@ -249,15 +226,22 @@ const MergePDF = () => {
           {selectedFiles.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium">Selected Files ({selectedFiles.length})</h4>
+                <h4 className="font-medium">
+                  Selected Files ({selectedFiles.length})
+                </h4>
                 <Badge variant="secondary">
-                  {selectedFiles.length >= 2 ? 'Ready to merge' : 'Need more files'}
+                  {selectedFiles.length >= 2
+                    ? "Ready to merge"
+                    : "Need more files"}
                 </Badge>
               </div>
-              
+
               <div className="space-y-2">
                 {selectedFiles.map(({ file, id }, index) => (
-                  <div key={id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                  <div
+                    key={id}
+                    className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-sm font-medium">
                         {index + 1}
@@ -286,9 +270,9 @@ const MergePDF = () => {
 
           {/* Merge Button */}
           <div className="pt-4">
-            <Button 
+            <Button
               onClick={mergePDFs}
-              disabled={selectedFiles.length < 2 || isProcessing || !user}
+              disabled={selectedFiles.length < 2 || isProcessing || !session}
               className="w-full"
               size="lg"
             >
@@ -304,8 +288,8 @@ const MergePDF = () => {
                 </>
               )}
             </Button>
-            
-            {!user && (
+
+            {!session && (
               <p className="text-sm text-muted-foreground text-center mt-2">
                 Please sign in to use this tool
               </p>
@@ -342,13 +326,17 @@ const MergePDF = () => {
               <div className="flex items-center space-x-3">
                 <FileText className="h-6 w-6 text-success" />
                 <div>
-                  <p className="font-medium">{result.conversion.converted_filename}</p>
+                  <p className="font-medium">{result.filename}</p>
                   <p className="text-sm text-muted-foreground">
-                    {(result.conversion.file_size / (1024 * 1024)).toFixed(1)} MB
+                    {(result.file_size / (1024 * 1024)).toFixed(1)} MB
                   </p>
                 </div>
               </div>
-              <Button onClick={downloadFile}>
+              <Button
+                onClick={() => {
+                  downloadFile(result);
+                }}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </Button>
@@ -366,7 +354,10 @@ const MergePDF = () => {
               <p className="text-sm font-medium">Important Notes:</p>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Files are merged in the order they appear in the list</li>
-                <li>• Your files are processed securely and automatically deleted after download</li>
+                <li>
+                  • Your files are processed securely and automatically deleted
+                  after download
+                </li>
                 <li>• Maximum file size: 10MB per file for free accounts</li>
                 <li>• Supported format: PDF files only</li>
               </ul>

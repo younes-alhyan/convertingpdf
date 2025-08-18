@@ -1,25 +1,37 @@
-import { useState, useCallback } from 'react';
+import JSZip from "jszip";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { 
-  Upload, 
-  FileText, 
-  X, 
-  Download, 
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
+import {
+  Upload,
+  FileText,
+  X,
+  Download,
   Scissors,
   AlertCircle,
   CheckCircle,
   Loader2,
-  Settings
-} from 'lucide-react';
+  Settings,
+} from "lucide-react";
 
 interface SplitFile {
   filename: string;
@@ -30,13 +42,12 @@ interface SplitFile {
 
 interface ConversionResult {
   success: boolean;
-  conversion: any;
   files: SplitFile[];
   message: string;
 }
 
 const SplitPDF = () => {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -44,23 +55,25 @@ const SplitPDF = () => {
   const [splitType, setSplitType] = useState("pages");
   const [splitValue, setSplitValue] = useState("1");
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    
-    if (file && file.type === 'application/pdf') {
-      setSelectedFile(file);
-      setResult(null);
-    } else {
-      toast({
-        title: "Invalid File",
-        description: "Please select a PDF file",
-        variant: "destructive"
-      });
-    }
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
 
-    // Reset the input
-    event.target.value = '';
-  }, []);
+      if (file && file.type === "application/pdf") {
+        setSelectedFile(file);
+        setResult(null);
+      } else {
+        toast({
+          title: "Invalid File",
+          description: "Please select a PDF file",
+          variant: "destructive",
+        });
+      }
+
+      event.target.value = "";
+    },
+    []
+  );
 
   const removeFile = useCallback(() => {
     setSelectedFile(null);
@@ -68,11 +81,11 @@ const SplitPDF = () => {
   }, []);
 
   const splitPDF = async () => {
-    if (!user) {
+    if (!session) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to use this tool",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -81,7 +94,7 @@ const SplitPDF = () => {
       toast({
         title: "File Required",
         description: "Please select a PDF file first",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -90,7 +103,7 @@ const SplitPDF = () => {
       toast({
         title: "Split Configuration Required",
         description: "Please specify how to split the PDF",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -100,54 +113,86 @@ const SplitPDF = () => {
     setResult(null);
 
     try {
-      console.log('Starting PDF split...');
-      
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
+      const token = session?.token;
+
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to use this tool",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Prepare form data
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('splitType', splitType);
-      formData.append('splitValue', splitValue);
+      formData.append("file", selectedFile);
+      formData.append("splitType", splitType);
+      formData.append("splitValue", splitValue);
 
       setProgress(30);
 
-      // Call the split function
-      const { data, error } = await supabase.functions.invoke('split-pdf', {
-        body: formData,
+      const response = await fetch("/api/split-pdf", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        }
+          Authorization: token,
+        },
+        body: formData,
       });
 
-      setProgress(80);
+      setProgress(70);
 
-      if (error) {
-        throw new Error(error.message || 'Split failed');
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Split failed");
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Split failed');
+      const blob = await response.blob();
+      const zip = await JSZip.loadAsync(blob);
+
+      const files: SplitFile[] = [];
+      const ranges = splitType === "ranges" ? splitValue.split(",") : [];
+      let pageIndex = 0;
+
+      for (const filename of Object.keys(zip.files)) {
+        const fileBlob = await zip.files[filename].async("blob");
+        let pageRange = "";
+
+        if (splitType === "pages") {
+          const start = pageIndex + 1;
+          const end = start + parseInt(splitValue, 10) - 1;
+          pageRange = `${start}-${end}`;
+          pageIndex += parseInt(splitValue, 10);
+        } else if (splitType === "ranges") {
+          pageRange = ranges.shift() || "";
+        }
+
+        const url = URL.createObjectURL(fileBlob);
+
+        files.push({
+          filename,
+          storagePath: url,
+          size: fileBlob.size,
+          pageRange,
+        });
       }
 
-      setResult(data);
+      setResult({
+        success: true,
+        files,
+        message: "Your PDF was split successfully",
+      });
       setProgress(100);
 
       toast({
-        title: "Success!",
-        description: data.message,
+        title: "Split Complete",
+        description: "Your PDF was split successfully",
       });
-
-    } catch (error: any) {
-      console.error('Split error:', error);
+    } catch (error) {
+      console.error("Split error:", error);
       toast({
         title: "Split Failed",
         description: error.message || "Failed to split PDF. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
@@ -155,53 +200,14 @@ const SplitPDF = () => {
     }
   };
 
-  const downloadFile = async (file: SplitFile) => {
-    if (!user) return;
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
-      }
-
-      const response = await fetch(
-        `https://qhmllrbocnungavzdswn.supabase.co/functions/v1/download-file/${result?.conversion?.id}`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Downloaded",
-        description: `${file.filename} has been downloaded`,
-      });
-
-    } catch (error: any) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download Failed",
-        description: error.message || "Failed to download file",
-        variant: "destructive"
-      });
-    }
+  const downloadFile = (file: SplitFile) => {
+    const a = document.createElement("a");
+    a.href = file.storagePath;
+    a.download = file.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(file.storagePath);
   };
 
   return (
@@ -214,7 +220,8 @@ const SplitPDF = () => {
           </div>
           <CardTitle className="text-2xl">PDF Splitter</CardTitle>
           <CardDescription>
-            Split PDF files into smaller documents. Extract specific pages or divide into equal parts.
+            Split PDF files into smaller documents. Extract specific pages or
+            divide into equal parts.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -249,7 +256,10 @@ const SplitPDF = () => {
                     />
                   </label>
                 </div>
-                <Button variant="outline" onClick={() => document.getElementById('pdf-upload')?.click()}>
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById("pdf-upload")?.click()}
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Select PDF File
                 </Button>
@@ -297,7 +307,9 @@ const SplitPDF = () => {
                     <SelectValue placeholder="Select split method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pages">Split by Pages per File</SelectItem>
+                    <SelectItem value="pages">
+                      Split by Pages per File
+                    </SelectItem>
                     <SelectItem value="ranges">Split by Page Ranges</SelectItem>
                   </SelectContent>
                 </Select>
@@ -305,30 +317,31 @@ const SplitPDF = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="split-value">
-                  {splitType === 'pages' ? 'Pages per File' : 'Page Ranges'}
+                  {splitType === "pages" ? "Pages per File" : "Page Ranges"}
                 </Label>
                 <Input
                   id="split-value"
                   placeholder={
-                    splitType === 'pages' 
-                      ? "e.g., 2 (2 pages per file)" 
+                    splitType === "pages"
+                      ? "e.g., 2 (2 pages per file)"
                       : "e.g., 1-3,5-7,9 (specific ranges)"
                   }
                   value={splitValue}
                   onChange={(e) => setSplitValue(e.target.value)}
                 />
                 <p className="text-sm text-muted-foreground">
-                  {splitType === 'pages' 
+                  {splitType === "pages"
                     ? "Number of pages each split file should contain"
-                    : "Comma-separated page ranges (e.g., 1-3,5-7,9)"
-                  }
+                    : "Comma-separated page ranges (e.g., 1-3,5-7,9)"}
                 </p>
               </div>
             </div>
 
-            <Button 
+            <Button
               onClick={splitPDF}
-              disabled={!selectedFile || isProcessing || !user || !splitValue.trim()}
+              disabled={
+                !selectedFile || isProcessing || !session || !splitValue.trim()
+              }
               className="w-full"
               size="lg"
             >
@@ -345,13 +358,12 @@ const SplitPDF = () => {
               )}
             </Button>
 
-            {!user && (
+            {!session && (
               <p className="text-sm text-muted-foreground text-center">
                 Please sign in to use this tool
               </p>
             )}
 
-            {/* Progress */}
             {isProcessing && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
@@ -373,9 +385,7 @@ const SplitPDF = () => {
               <CheckCircle className="h-5 w-5 text-success" />
               <span>Split Completed</span>
             </CardTitle>
-            <CardDescription>
-              {result.message}
-            </CardDescription>
+            <CardDescription>{result.message}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -390,14 +400,17 @@ const SplitPDF = () => {
                   <div className="flex items-center space-x-3">
                     <FileText className="h-6 w-6 text-primary" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{file.filename}</p>
+                      <p className="text-sm font-medium truncate">
+                        {file.filename}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Pages: {file.pageRange} • {(file.size / 1024).toFixed(1)} KB
+                        Pages: {file.pageRange} •{" "}
+                        {(file.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
                   </div>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="w-full"
                     onClick={() => downloadFile(file)}
                   >
@@ -419,8 +432,14 @@ const SplitPDF = () => {
             <div className="space-y-1">
               <p className="text-sm font-medium">Split Options:</p>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• <strong>Pages per File:</strong> Split into files with equal number of pages</li>
-                <li>• <strong>Page Ranges:</strong> Extract specific page ranges (e.g., 1-3,5-7,9)</li>
+                <li>
+                  • <strong>Pages per File:</strong> Split into files with equal
+                  number of pages
+                </li>
+                <li>
+                  • <strong>Page Ranges:</strong> Extract specific page ranges
+                  (e.g., 1-3,5-7,9)
+                </li>
                 <li>• Files are processed securely on our servers</li>
                 <li>• Maximum file size: 50MB for optimal performance</li>
                 <li>• Output format: Individual PDF files</li>

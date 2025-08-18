@@ -1,27 +1,32 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { 
-  Upload, 
-  FileText, 
-  X, 
-  Download, 
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
+import {
+  Upload,
+  FileText,
+  X,
+  Download,
   Minimize2,
   AlertCircle,
   CheckCircle,
   Loader2,
   Info,
   Zap,
-  Shield
-} from 'lucide-react';
+  Shield,
+} from "lucide-react";
 
 interface CompressionResult {
   conversion_id: string;
@@ -30,47 +35,51 @@ interface CompressionResult {
   compressedSize: number;
   compressionRatio: number;
   message: string;
+  downloadUrl: string;
 }
 
 const CompressPDF = () => {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [compressionLevel, setCompressionLevel] = useState<string>('medium');
+  const [compressionLevel, setCompressionLevel] = useState<string>("medium");
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<CompressionResult | null>(null);
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    
-    if (!file) return;
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
 
-    // Check if it's a PDF
-    if (file.type !== 'application/pdf') {
-      toast({
-        title: "Invalid File",
-        description: "Only PDF files are allowed",
-        variant: "destructive"
-      });
-      return;
-    }
+      if (!file) return;
 
-    // Check file size (50MB limit)
-    if (file.size > 50 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "File size must be less than 50MB",
-        variant: "destructive"
-      });
-      return;
-    }
+      // Check if it's a PDF
+      if (file.type !== "application/pdf") {
+        toast({
+          title: "Invalid File",
+          description: "Only PDF files are allowed",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    setSelectedFile(file);
-    setResult(null);
-    
-    // Reset the input
-    event.target.value = '';
-  }, []);
+      // Check file size (50MB limit)
+      if (file.size > 50 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "File size must be less than 50MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+      setResult(null);
+
+      // Reset the input
+      event.target.value = "";
+    },
+    []
+  );
 
   const removeFile = useCallback(() => {
     setSelectedFile(null);
@@ -78,11 +87,11 @@ const CompressPDF = () => {
   }, []);
 
   const compressPDF = async () => {
-    if (!user) {
+    if (!session) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to use this tool",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -91,7 +100,7 @@ const CompressPDF = () => {
       toast({
         title: "No File Selected",
         description: "Please select a PDF file to compress",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -100,54 +109,64 @@ const CompressPDF = () => {
     setProgress(10);
 
     try {
-      // Prepare form data
+      const token = session?.token;
+
+      if (!token) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to use this tool",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('compressionLevel', compressionLevel);
+      formData.append("file", selectedFile);
+      formData.append("compressionLevel", compressionLevel);
 
       setProgress(30);
 
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
-      }
-
-      setProgress(50);
-
-      // Call the compress function
-      const { data, error } = await supabase.functions.invoke('compress-pdf', {
-        body: formData,
+      const response = await fetch("/api/compress-pdf", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: token,
         },
+        body: formData,
       });
 
-      setProgress(80);
+      setProgress(70);
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Failed to compress PDF');
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Compression failed");
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'Compression failed');
-      }
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+
+      setResult({
+        conversion_id: "local-download",
+        filename: selectedFile.name.replace(".pdf", "_compressed.pdf"),
+        originalSize: selectedFile.size,
+        compressedSize: blob.size,
+        compressionRatio: Math.round((1 - blob.size / selectedFile.size) * 100),
+        message: "Compression complete!",
+        downloadUrl,
+      });
 
       setProgress(100);
-      setResult(data);
 
       toast({
         title: "Compression Complete",
-        description: `PDF compressed with ${data.compressionRatio}% size reduction`,
+        description: "Your PDF was compressed successfully",
       });
-
     } catch (error) {
-      console.error('Compression error:', error);
+      console.error("Compression error:", error);
       toast({
         title: "Compression Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-        variant: "destructive"
+        description:
+          error instanceof Error ? error.message : "Unexpected error",
+        variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
@@ -155,53 +174,22 @@ const CompressPDF = () => {
     }
   };
 
-  const downloadFile = async (conversionId: string, filename: string) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('No valid session');
-      }
-
-      const { data, error } = await supabase.functions.invoke('download-file', {
-        body: { conversion_id: conversionId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error || !data?.download_url) {
-        throw new Error('Failed to get download URL');
-      }
-
-      // Create download link
-      const link = document.createElement('a');
-      link.href = data.download_url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Download Started",
-        description: "Your compressed PDF is downloading",
-      });
-
-    } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download Failed",
-        description: error instanceof Error ? error.message : "Failed to download file",
-        variant: "destructive"
-      });
-    }
+  const downloadFile = (result: CompressionResult) => {
+    if (!result.downloadUrl) return;
+    const link = document.createElement("a");
+    link.href = result.downloadUrl;
+    link.download = result.filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
@@ -215,7 +203,8 @@ const CompressPDF = () => {
           Compress PDF Files
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Reduce your PDF file size while maintaining quality. Choose from different compression levels to find the perfect balance.
+          Reduce your PDF file size while maintaining quality. Choose from
+          different compression levels to find the perfect balance.
         </p>
       </div>
 
@@ -231,15 +220,18 @@ const CompressPDF = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RadioGroup 
-            value={compressionLevel} 
+          <RadioGroup
+            value={compressionLevel}
             onValueChange={setCompressionLevel}
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
             <div className="flex items-center space-x-2 p-4 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
               <RadioGroupItem value="low" id="low" />
               <div className="space-y-1 flex-1">
-                <Label htmlFor="low" className="cursor-pointer font-medium flex items-center space-x-2">
+                <Label
+                  htmlFor="low"
+                  className="cursor-pointer font-medium flex items-center space-x-2"
+                >
                   <Shield className="h-4 w-4 text-green-500" />
                   <span>Low Compression</span>
                 </Label>
@@ -248,11 +240,14 @@ const CompressPDF = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-2 p-4 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
               <RadioGroupItem value="medium" id="medium" />
               <div className="space-y-1 flex-1">
-                <Label htmlFor="medium" className="cursor-pointer font-medium flex items-center space-x-2">
+                <Label
+                  htmlFor="medium"
+                  className="cursor-pointer font-medium flex items-center space-x-2"
+                >
                   <Info className="h-4 w-4 text-blue-500" />
                   <span>Medium Compression</span>
                 </Label>
@@ -261,11 +256,14 @@ const CompressPDF = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-2 p-4 rounded-lg border border-border hover:bg-secondary/50 cursor-pointer">
               <RadioGroupItem value="high" id="high" />
               <div className="space-y-1 flex-1">
-                <Label htmlFor="high" className="cursor-pointer font-medium flex items-center space-x-2">
+                <Label
+                  htmlFor="high"
+                  className="cursor-pointer font-medium flex items-center space-x-2"
+                >
                   <Zap className="h-4 w-4 text-orange-500" />
                   <span>High Compression</span>
                 </Label>
@@ -295,7 +293,9 @@ const CompressPDF = () => {
               <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <div className="space-y-2">
                 <p className="text-lg font-medium">Drop your PDF file here</p>
-                <p className="text-muted-foreground">or click to browse files</p>
+                <p className="text-muted-foreground">
+                  or click to browse files
+                </p>
               </div>
               <Input
                 type="file"
@@ -326,7 +326,7 @@ const CompressPDF = () => {
                 </Button>
               </div>
 
-              <Button 
+              <Button
                 onClick={compressPDF}
                 disabled={isProcessing}
                 className="w-full"
@@ -373,15 +373,21 @@ const CompressPDF = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-lg bg-secondary/20">
                 <p className="text-sm text-muted-foreground">Original Size</p>
-                <p className="text-lg font-semibold">{formatFileSize(result.originalSize)}</p>
+                <p className="text-lg font-semibold">
+                  {formatFileSize(result.originalSize)}
+                </p>
               </div>
               <div className="text-center p-4 rounded-lg bg-secondary/20">
                 <p className="text-sm text-muted-foreground">Compressed Size</p>
-                <p className="text-lg font-semibold">{formatFileSize(result.compressedSize)}</p>
+                <p className="text-lg font-semibold">
+                  {formatFileSize(result.compressedSize)}
+                </p>
               </div>
               <div className="text-center p-4 rounded-lg bg-success/10">
                 <p className="text-sm text-muted-foreground">Size Reduction</p>
-                <p className="text-lg font-semibold text-success">{result.compressionRatio}%</p>
+                <p className="text-lg font-semibold text-success">
+                  {result.compressionRatio}%
+                </p>
               </div>
             </div>
 
@@ -396,8 +402,8 @@ const CompressPDF = () => {
                     </p>
                   </div>
                 </div>
-                <Button 
-                  onClick={() => downloadFile(result.conversion_id, result.filename)}
+                <Button
+                  onClick={() => downloadFile(result)}
                   className="flex items-center space-x-2"
                 >
                   <Download className="h-4 w-4" />
