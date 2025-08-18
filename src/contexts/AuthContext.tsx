@@ -13,7 +13,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string
+  ) => Promise<{ error?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => void;
 }
@@ -49,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const res = await fetch(`/api/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ fullName, email, password }),
       });
 
       const data = await res.json();
@@ -75,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (data.error) return { error: data.error };
 
-      const userObj: User = { email };
+      const userObj: User = { email: data.email, fullName: data.fullName };
       const sessionObj: Session = { token: data.token };
 
       setUser(userObj);
@@ -97,7 +101,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("session");
   };
 
-  const value: AuthContextType = { user, session, loading, signUp, signIn, signOut };
+  const value: AuthContextType = {
+    user,
+    session,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
