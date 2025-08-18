@@ -35,14 +35,17 @@ import {
 
 interface SplitFile {
   filename: string;
-  storagePath: string;
   size: number;
   pageRange: string;
+  url: string;
 }
 
-interface ConversionResult {
-  success: boolean;
-  files: SplitFile[];
+interface Result {
+  conversion_id: string;
+  converted_filename: string;
+  converted_file_size: number;
+  downloadUrl: string;
+  status: string;
   message: string;
 }
 
@@ -51,7 +54,8 @@ const SplitPDF = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<ConversionResult | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+  const [splitFiles, setsplitFiles] = useState<SplitFile[]>([]);
   const [splitType, setSplitType] = useState("pages");
   const [splitValue, setSplitValue] = useState("1");
 
@@ -134,7 +138,7 @@ const SplitPDF = () => {
       const response = await fetch("/api/split-pdf", {
         method: "POST",
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -146,8 +150,13 @@ const SplitPDF = () => {
         throw new Error(errData.error || "Split failed");
       }
 
-      const blob = await response.blob();
-      const zip = await JSZip.loadAsync(blob);
+      const data = await response.json();
+
+      setResult(data);
+
+      const zipFile = await fetch(data.downloadUrl);
+      const zipBlob = await zipFile.blob();
+      const zip = await JSZip.loadAsync(zipBlob);
 
       const files: SplitFile[] = [];
       const ranges = splitType === "ranges" ? splitValue.split(",") : [];
@@ -170,17 +179,12 @@ const SplitPDF = () => {
 
         files.push({
           filename,
-          storagePath: url,
           size: fileBlob.size,
+          url,
           pageRange,
         });
       }
-
-      setResult({
-        success: true,
-        files,
-        message: "Your PDF was split successfully",
-      });
+      setsplitFiles(files);
       setProgress(100);
 
       toast({
@@ -202,12 +206,11 @@ const SplitPDF = () => {
 
   const downloadFile = (file: SplitFile) => {
     const a = document.createElement("a");
-    a.href = file.storagePath;
+    a.href = file.url;
     a.download = file.filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    window.URL.revokeObjectURL(file.storagePath);
   };
 
   return (
@@ -390,12 +393,12 @@ const SplitPDF = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Badge variant="secondary">
-                {result.files.length} file(s) created
+                {splitFiles.length} file(s) created
               </Badge>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {result.files.map((file, index) => (
+              {splitFiles.map((file, index) => (
                 <div key={index} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center space-x-3">
                     <FileText className="h-6 w-6 text-primary" />

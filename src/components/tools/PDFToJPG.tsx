@@ -25,10 +25,19 @@ import {
 } from "lucide-react";
 import JSZip from "jszip";
 
-interface ConvertedImage {
+interface ImageInterface {
   filename: string;
   blob: Blob;
   url: string;
+}
+
+interface Result {
+  conversion_id: string;
+  converted_filename: string;
+  converted_file_size: number;
+  downloadUrl: string;
+  status: string;
+  message: string;
 }
 
 const PDFToJPGServer = () => {
@@ -36,14 +45,14 @@ const PDFToJPGServer = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [convertedImages, setConvertedImages] = useState<ConvertedImage[]>([]);
+  const [convertedImages, setConvertedImages] = useState<ImageInterface[]>([]);
+  const [result, setResult] = useState<Result | null>(null);
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (file && file.type === "application/pdf") {
         setSelectedFile(file);
-        setConvertedImages([]);
       } else {
         toast({
           title: "Invalid File",
@@ -58,7 +67,6 @@ const PDFToJPGServer = () => {
 
   const removeFile = useCallback(() => {
     setSelectedFile(null);
-    setConvertedImages([]);
   }, []);
 
   const convertPDFServerSide = async () => {
@@ -83,23 +91,28 @@ const PDFToJPGServer = () => {
     setProgress(10);
 
     try {
+      const token = session?.token;
+
       const formData = new FormData();
       formData.append("file", selectedFile);
 
       const response = await fetch("/api/pdf-to-jpg", {
         method: "POST",
-        headers: { Authorization: session.token },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       if (!response.ok) throw new Error("Conversion failed");
 
-      const zipBlob = await response.blob();
+      const data = await response.json();
+      setResult(data);
       setProgress(70);
 
+      const zipFile = await fetch(data.downloadUrl);
+      const zipBlob = await zipFile.blob();
       // Parse ZIP
       const zip = await JSZip.loadAsync(zipBlob);
-      const images: ConvertedImage[] = [];
+      const images: ImageInterface[] = [];
       for (const filename of Object.keys(zip.files)) {
         const blob = await zip.files[filename].async("blob");
         images.push({ filename, blob, url: URL.createObjectURL(blob) });
@@ -124,7 +137,7 @@ const PDFToJPGServer = () => {
     }
   };
 
-  const downloadImage = (image: ConvertedImage) => {
+  const downloadImage = (image: ImageInterface) => {
     const a = document.createElement("a");
     a.href = image.url;
     a.download = image.filename;
@@ -135,10 +148,13 @@ const PDFToJPGServer = () => {
   };
 
   const downloadAll = () => {
-    if (!convertedImages.length) return;
-    convertedImages.map((img) => {
-      downloadImage(img);
-    });
+    if (!result.downloadUrl) return;
+    const link = document.createElement("a");
+    link.href = result.downloadUrl;
+    link.download = result.converted_filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (

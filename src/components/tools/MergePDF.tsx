@@ -23,11 +23,13 @@ import {
   Loader2,
 } from "lucide-react";
 
-interface MergingResult {
-  filename: string;
-  file_size: number;
-  message: string;
+interface Result {
+  conversion_id: string;
+  converted_filename: string;
+  converted_file_size: number;
   downloadUrl: string;
+  status: string;
+  message: string;
 }
 
 interface SelectedFile {
@@ -40,7 +42,7 @@ const MergePDF = () => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<MergingResult>(null);
+  const [result, setResult] = useState<Result | null>(null);
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,7 +61,7 @@ const MergePDF = () => {
 
       const newFiles: SelectedFile[] = pdfFiles.map((file) => ({
         file,
-        id: Math.random().toString(36).substr(2, 9),
+        id: crypto.randomUUID(),
       }));
 
       setSelectedFiles((prev) => [...prev, ...newFiles]);
@@ -110,7 +112,7 @@ const MergePDF = () => {
       const response = await fetch("/api/merge-pdf", {
         method: "POST",
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -122,15 +124,8 @@ const MergePDF = () => {
         throw new Error(errData.error || "Merging failed");
       }
 
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-
-      setResult({
-        filename: "merged.pdf",
-        file_size: blob.size,
-        message: "Merging Completed",
-        downloadUrl,
-      });
+      const data = await response.json();
+      setResult(data);
 
       setProgress(100);
 
@@ -154,11 +149,11 @@ const MergePDF = () => {
     }
   };
 
-  const downloadFile = async (result: MergingResult) => {
-    if (!result.downloadUrl) return;
+  const downloadFile = () => {
+    if (!result || !result.downloadUrl) return;
     const link = document.createElement("a");
     link.href = result.downloadUrl;
-    link.download = result.filename;
+    link.download = result.converted_filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -326,15 +321,15 @@ const MergePDF = () => {
               <div className="flex items-center space-x-3">
                 <FileText className="h-6 w-6 text-success" />
                 <div>
-                  <p className="font-medium">{result.filename}</p>
+                  <p className="font-medium">{result.converted_filename}</p>
                   <p className="text-sm text-muted-foreground">
-                    {(result.file_size / (1024 * 1024)).toFixed(1)} MB
+                    {(result.converted_file_size / (1024 * 1024)).toFixed(1)} MB
                   </p>
                 </div>
               </div>
               <Button
                 onClick={() => {
-                  downloadFile(result);
+                  downloadFile();
                 }}
               >
                 <Download className="h-4 w-4 mr-2" />

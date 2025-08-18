@@ -22,13 +22,21 @@ import {
   Info,
 } from "lucide-react";
 
+interface Result {
+  conversion_id: string;
+  converted_filename: string;
+  converted_file_size: number;
+  downloadUrl: string;
+  status: string;
+  message: string;
+}
+
 const PDFToWord = () => {
   const { session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [convertedFile, setConvertedFile] = useState<Blob | null>(null);
-  const [filename, setFilename] = useState<string>("");
+  const [result, setResult] = useState<Result | null>(null);
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,8 +62,6 @@ const PDFToWord = () => {
       }
 
       setSelectedFile(file);
-      setConvertedFile(null);
-      setFilename("");
       event.target.value = "";
     },
     []
@@ -63,8 +69,6 @@ const PDFToWord = () => {
 
   const removeFile = useCallback(() => {
     setSelectedFile(null);
-    setConvertedFile(null);
-    setFilename("");
   }, []);
 
   const convertToWord = async () => {
@@ -102,7 +106,7 @@ const PDFToWord = () => {
       const response = await fetch("/api/pdf-to-word", {
         method: "POST",
         headers: {
-          Authorization: `${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -114,15 +118,8 @@ const PDFToWord = () => {
       }
 
       // Expecting a Word file (.docx) as a blob
-      const blob = await response.blob();
-      setConvertedFile(blob);
-
-      // change file name
-      let name = selectedFile
-        ? selectedFile.name.replace(/\.pdf$/i, "")
-        : "converted";
-      name = `${name}.docx`;
-      setFilename(name);
+      const data = await response.json();
+      setResult(data);
 
       setProgress(100);
       toast({
@@ -146,11 +143,11 @@ const PDFToWord = () => {
   };
 
   const downloadFile = () => {
-    if (!convertedFile || !filename) return;
+    if (!result) return;
 
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(convertedFile);
-    link.download = filename;
+    link.href = result.downloadUrl;
+    link.download = result.converted_filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -265,7 +262,7 @@ const PDFToWord = () => {
       </Card>
 
       {/* Results */}
-      {convertedFile && (
+      {result && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-success">
@@ -278,7 +275,7 @@ const PDFToWord = () => {
               <div className="flex items-center space-x-3">
                 <FileEdit className="h-8 w-8 text-primary" />
                 <div>
-                  <p className="font-medium">{filename}</p>
+                  <p className="font-medium">{result.converted_filename}</p>
                   <p className="text-sm text-muted-foreground">Word Document</p>
                 </div>
               </div>

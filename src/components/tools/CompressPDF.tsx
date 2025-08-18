@@ -28,23 +28,23 @@ import {
   Shield,
 } from "lucide-react";
 
-interface CompressionResult {
+interface Result {
   conversion_id: string;
-  filename: string;
-  originalSize: number;
-  compressedSize: number;
-  compressionRatio: number;
-  message: string;
+  converted_filename: string;
+  converted_file_size: number;
   downloadUrl: string;
+  status: string;
+  message: string;
 }
-
 const CompressPDF = () => {
   const { session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileSize, setFileSize] = useState<number | null>(null);
+  const [compressionRatio, setCompressionRatio] = useState<number | null>(null);
   const [compressionLevel, setCompressionLevel] = useState<string>("medium");
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<CompressionResult | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,6 +73,7 @@ const CompressPDF = () => {
       }
 
       setSelectedFile(file);
+      setFileSize(file.size);
       setResult(null);
 
       // Reset the input
@@ -129,7 +130,7 @@ const CompressPDF = () => {
       const response = await fetch("/api/compress-pdf", {
         method: "POST",
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -141,19 +142,13 @@ const CompressPDF = () => {
         throw new Error(errData.error || "Compression failed");
       }
 
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
+      const data = await response.json();
 
-      setResult({
-        conversion_id: "local-download",
-        filename: selectedFile.name.replace(".pdf", "_compressed.pdf"),
-        originalSize: selectedFile.size,
-        compressedSize: blob.size,
-        compressionRatio: Math.round((1 - blob.size / selectedFile.size) * 100),
-        message: "Compression complete!",
-        downloadUrl,
-      });
-
+      setResult(data);
+      const compressionRatio = Math.round(
+        (1 - data.converted_file_size / (fileSize ?? 1)) * 100
+      );
+      setCompressionRatio(compressionRatio);
       setProgress(100);
 
       toast({
@@ -174,11 +169,11 @@ const CompressPDF = () => {
     }
   };
 
-  const downloadFile = (result: CompressionResult) => {
-    if (!result.downloadUrl) return;
+  const downloadFile = () => {
+    if (!result || !result.downloadUrl) return;
     const link = document.createElement("a");
     link.href = result.downloadUrl;
-    link.download = result.filename;
+    link.download = result.converted_filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -374,19 +369,19 @@ const CompressPDF = () => {
               <div className="text-center p-4 rounded-lg bg-secondary/20">
                 <p className="text-sm text-muted-foreground">Original Size</p>
                 <p className="text-lg font-semibold">
-                  {formatFileSize(result.originalSize)}
+                  {formatFileSize(fileSize)}
                 </p>
               </div>
               <div className="text-center p-4 rounded-lg bg-secondary/20">
                 <p className="text-sm text-muted-foreground">Compressed Size</p>
                 <p className="text-lg font-semibold">
-                  {formatFileSize(result.compressedSize)}
+                  {formatFileSize(result.converted_file_size)}
                 </p>
               </div>
               <div className="text-center p-4 rounded-lg bg-success/10">
                 <p className="text-sm text-muted-foreground">Size Reduction</p>
                 <p className="text-lg font-semibold text-success">
-                  {result.compressionRatio}%
+                  {compressionRatio}%
                 </p>
               </div>
             </div>
@@ -396,14 +391,14 @@ const CompressPDF = () => {
                 <div className="flex items-center space-x-3">
                   <FileText className="h-8 w-8 text-primary" />
                   <div>
-                    <p className="font-medium">{result.filename}</p>
+                    <p className="font-medium">{result.converted_file_size}</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatFileSize(result.compressedSize)}
+                      {formatFileSize(result.converted_file_size)}
                     </p>
                   </div>
                 </div>
                 <Button
-                  onClick={() => downloadFile(result)}
+                  onClick={() => downloadFile()}
                   className="flex items-center space-x-2"
                 >
                   <Download className="h-4 w-4" />
