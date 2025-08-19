@@ -101,7 +101,7 @@ const Dashboard = () => {
   const fetchConversions = async () => {
     try {
       const token = session?.token;
-      const res = await fetch("/api/conversions", {
+      const res = await fetch("https://convertingpdf.onrender.com/conversions", {
         headers: {
           Authorization: `Bearer ${token}`,
           "X-User-ID": user.id,

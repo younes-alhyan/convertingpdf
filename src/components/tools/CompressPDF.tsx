@@ -127,7 +127,7 @@ const CompressPDF = () => {
 
       setProgress(30);
 
-      const response = await fetch("/api/compress-pdf", {
+      const response = await fetch("https://convertingpdf.onrender.com/compress-pdf", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -109,7 +109,7 @@ const MergePDF = () => {
 
       const token = session.token;
 
-      const response = await fetch("/api/merge-pdf", {
+      const response = await fetch("https://convertingpdf.onrender.com/merge-pdf", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

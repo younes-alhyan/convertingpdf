@@ -96,7 +96,7 @@ const PDFToJPGServer = () => {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch("/api/pdf-to-jpg", {
+      const response = await fetch("https://convertingpdf.onrender.com/pdf-to-jpg", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -135,7 +135,7 @@ const SplitPDF = () => {
 
       setProgress(30);
 
-      const response = await fetch("/api/split-pdf", {
+      const response = await fetch("https://convertingpdf.onrender.com/split-pdf", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -103,7 +103,7 @@ const PDFToWord = () => {
 
       setProgress(40);
 
-      const response = await fetch("/api/pdf-to-word", {
+      const response = await fetch("https://convertingpdf.onrender.com/pdf-to-word", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
