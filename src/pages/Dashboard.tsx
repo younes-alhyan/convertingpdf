@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface Conversion {
   id: string;
@@ -95,10 +96,12 @@ const Dashboard = () => {
     }
   }, [session]);
 
+  const navigate = useNavigate();
+
   const fetchConversions = async () => {
     try {
       const token = session?.token;
-      const res = await fetch("/api/conversions", {
+      const res = await fetch("/api/convertions", {
         headers: {
           Authorization: `Bearer ${token}`,
           "X-User-ID": user.id,
@@ -110,6 +113,8 @@ const Dashboard = () => {
       }
 
       const data: Conversion[] = await res.json();
+      console.log(data);
+
       setConversions(data);
     } catch (error) {
       console.error("Error fetching conversions:", error);
@@ -215,10 +220,7 @@ const Dashboard = () => {
                     <Button
                       className="w-full"
                       onClick={() => {
-                        toast({
-                          title: "Coming Soon",
-                          description: `${tool.title} tool will be available soon!`,
-                        });
+                        navigate(tool.path);
                       }}
                     >
                       <Upload className="mr-2 h-4 w-4" />
