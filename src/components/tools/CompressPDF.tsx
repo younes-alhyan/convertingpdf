@@ -399,7 +399,7 @@ const CompressPDF = () => {
                 <div className="flex items-center space-x-3">
                   <FileText className="h-8 w-8 text-primary" />
                   <div>
-                    <p className="font-medium">{result.converted_file_size}</p>
+                    <p className="font-medium">{result.converted_filename}</p>
                     <p className="text-sm text-muted-foreground">
                       {formatFileSize(result.converted_file_size)}
                     </p>

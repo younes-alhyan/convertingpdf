@@ -101,7 +101,7 @@ const Dashboard = () => {
   const fetchConversions = async () => {
     try {
       const token = session?.token;
-      const res = await fetch("/api/convertions", {
+      const res = await fetch("/api/conversions", {
         headers: {
           Authorization: `Bearer ${token}`,
           "X-User-ID": user.id,
@@ -112,9 +112,9 @@ const Dashboard = () => {
         throw new Error("Failed to fetch conversions");
       }
 
-      const data: Conversion[] = await res.json();
-      console.log(data);
-
+      const json = await res.json();
+      // normalize to array
+      const data: Conversion[] = Array.isArray(json) ? json : json.data ?? [];
       setConversions(data);
     } catch (error) {
       console.error("Error fetching conversions:", error);
