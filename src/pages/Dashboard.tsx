@@ -116,6 +116,7 @@ const Dashboard = () => {
       // normalize to array
       const data: Conversion[] = Array.isArray(json) ? json : json.data ?? [];
       setConversions(data);
+      console.log(data);
     } catch (error) {
       console.error("Error fetching conversions:", error);
       toast({
@@ -127,14 +128,34 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+  const sanitizeFilename = (name: string) => {
+    return name.replace(/[/\\?%*:|"<>]/g, "-").replace(/\s+/g, "_");
+  };
+  const download = async (downloadUrl: string, filename: string) => {
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error("Failed to fetch file");
 
-  const download = (url: string, filename: string) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename; // desired file name
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = sanitizeFilename(filename); // sanitized
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Release memory
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Download failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -309,7 +330,8 @@ const Dashboard = () => {
                                 onClick={() => {
                                   download(
                                     conversion.download_url,
-                                    conversion.converted_filename
+                                    conversion.converted_filename,
+                                  
                                   );
                                 }}
                               >
