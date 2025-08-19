@@ -145,24 +145,35 @@ const PDFToWord = () => {
 
   const downloadFile = async () => {
     if (!result) return;
-    // Fetch the file as a blob
-    const response = await fetch(result.downloadUrl);
-    if (!response.ok) throw new Error("Failed to fetch file");
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = result.converted_filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
     toast({
       title: "Download Started",
       description: "Your Word document is downloading",
     });
+    // Fetch the file as a blob
+    try {
+      const response = await fetch(result.downloadUrl);
+      if (!response.ok) throw new Error("Failed to fetch file");
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      
+      link.download = result.converted_filename; // e.g. "MyFile.docx"
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(blobUrl); // free memory
+    } catch (err) {
+      console.error("Download failed:", err);
+      toast({
+        title: "Download failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const formatFileSize = (bytes: number) => {

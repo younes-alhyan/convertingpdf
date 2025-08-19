@@ -116,7 +116,6 @@ const Dashboard = () => {
       // normalize to array
       const data: Conversion[] = Array.isArray(json) ? json : json.data ?? [];
       setConversions(data);
-      console.log(data);
     } catch (error) {
       console.error("Error fetching conversions:", error);
       toast({

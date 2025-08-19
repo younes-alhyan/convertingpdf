@@ -150,14 +150,35 @@ const PDFToJPGServer = () => {
     toast({ title: "Downloaded", description: `${image.filename} downloaded` });
   };
 
-  const downloadAll = () => {
+  const downloadAll = async () => {
     if (!result.downloadUrl) return;
-    const link = document.createElement("a");
-    link.href = result.downloadUrl;
-    link.download = result.converted_filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    try {
+      const response = await fetch(result.downloadUrl);
+      if (!response.ok) throw new Error("Failed to download file");
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = result.converted_filename; // your desired filename
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(blobUrl);
+      toast({
+        title: "Downloaded",
+        description: `${result.converted_filename} downloaded`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
