@@ -146,8 +146,9 @@ const PDFToWord = () => {
   const downloadFile = async () => {
     if (!result) return;
     toast({
-      title: "Download Started",
-      description: "Your Word document is downloading",
+      title: "Preparing download...",
+      description: "Please wait while your PDF is being processed.",
+      variant: "destructive",
     });
     // Fetch the file as a blob
     try {

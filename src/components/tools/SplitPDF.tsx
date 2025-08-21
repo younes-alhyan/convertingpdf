@@ -169,8 +169,20 @@ const SplitPDF = () => {
       const files: SplitFile[] = [];
       const ranges = splitType === "ranges" ? splitValue.split(",") : [];
       let pageIndex = 0;
+      const filenames = Object.keys(zip.files).sort((a, b) => {
+        // Extract the number from "pages_X_to_Y.pdf"
+        const numA = parseInt(
+          a.match(/pages_(\d+)_to_\d+\.pdf/)?.[1] || "0",
+          10
+        );
+        const numB = parseInt(
+          b.match(/pages_(\d+)_to_\d+\.pdf/)?.[1] || "0",
+          10
+        );
+        return numA - numB;
+      });
 
-      for (const filename of Object.keys(zip.files)) {
+      for (const filename of filenames) {
         const fileBlob = await zip.files[filename].async("blob");
         let pageRange = "";
 
@@ -213,6 +225,11 @@ const SplitPDF = () => {
   };
 
   const downloadFile = (file: SplitFile) => {
+    toast({
+          title: "Preparing download...",
+          description: "Please wait while your PDF is being processed.",
+          variant: "destructive",
+        });
     const a = document.createElement("a");
     a.href = file.url;
     a.download = file.filename;

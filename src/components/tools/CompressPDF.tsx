@@ -172,6 +172,11 @@ const CompressPDF = () => {
 
   const downloadFile = async () => {
     if (!result || !result.downloadUrl) return;
+    toast({
+      title: "Preparing download...",
+      description: "Please wait while your PDF is being processed.",
+      variant: "destructive",
+    });
     // Fetch the file as a blob
     const response = await fetch(result.downloadUrl);
     if (!response.ok) throw new Error("Failed to fetch file");
