@@ -9,11 +9,13 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import AllToolsPage from "./pages/AllToolsPage";
 import MergePDFPage from "./pages/tools/MergePDFPage";
 import SplitPDFPage from "./pages/tools/SplitPDFPage";
 import CompressPDFPage from "./pages/tools/CompressPDFPage";
 import PDFToJPGPage from "./pages/tools/PDFToJPGPage";
 import PDFToWordPage from "./pages/tools/PDFToWordPage";
+import EditPDFPage from "./pages/tools/EditPDFPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -39,11 +41,13 @@ const App = () => (
             />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/tools" element={<AllToolsPage />} />
             <Route path="/tools/merge" element={<MergePDFPage />} />
             <Route path="/tools/split" element={<SplitPDFPage />} />
             <Route path="/tools/compress" element={<CompressPDFPage />} />
             <Route path="/tools/pdf-to-jpg" element={<PDFToJPGPage />} />
             <Route path="/tools/pdf-to-word" element={<PDFToWordPage />} />
+            <Route path="/tools/edit" element={<EditPDFPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
