@@ -1,17 +1,26 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { componentTagger } from "lovable-tagger";
 
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8080,
+    proxy: {
+      "/api": {
+        target: "http://localhost:10000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
+  plugins: [react(), mode === "development" && componentTagger()].filter(
+    Boolean
+  ),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  preview: {
-    host: true, // allow external host
-    port: 4173, // or whatever port
-    allowedHosts: ["quick-doc-tool.onrender.com"], // <-- add your Render domain
-  },
-});
+}));
