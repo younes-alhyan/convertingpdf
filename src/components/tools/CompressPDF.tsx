@@ -175,7 +175,6 @@ const CompressPDF = () => {
     toast({
       title: "Preparing download...",
       description: "Please wait while your PDF is being processed.",
-      variant: "destructive",
     });
     // Fetch the file as a blob
     const response = await fetch(result.downloadUrl);

@@ -206,7 +206,6 @@ const EditPDF = () => {
     toast({
       title: "Preparing download...",
       description: "Please wait while your PDF is being processed.",
-      variant: "destructive",
     });
     const response = await fetch(result.downloadUrl);
     if (!response.ok) throw new Error("Failed to fetch file");

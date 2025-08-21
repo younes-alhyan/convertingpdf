@@ -155,7 +155,6 @@ const PDFToJPGServer = () => {
     toast({
           title: "Preparing download...",
           description: "Please wait while your PDF is being processed.",
-          variant: "destructive",
         });
     try {
       const response = await fetch(result.downloadUrl);

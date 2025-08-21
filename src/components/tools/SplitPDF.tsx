@@ -135,14 +135,17 @@ const SplitPDF = () => {
 
       setProgress(30);
 
-      const response = await fetch("https://convertingpdf.onrender.com/split-pdf", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        "https://convertingpdf.onrender.com/split-pdf",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "X-User-ID": user.id,
+          },
+          body: formData,
+        }
+      );
 
       setProgress(70);
 
@@ -226,10 +229,9 @@ const SplitPDF = () => {
 
   const downloadFile = (file: SplitFile) => {
     toast({
-          title: "Preparing download...",
-          description: "Please wait while your PDF is being processed.",
-          variant: "destructive",
-        });
+      title: "Preparing download...",
+      description: "Please wait while your PDF is being processed.",
+    });
     const a = document.createElement("a");
     a.href = file.url;
     a.download = file.filename;
