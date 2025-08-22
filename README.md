@@ -1,73 +1,38 @@
-# Welcome to your Lovable project
+# 📄✨ ConvertingPDF
 
-## Project info
+[ConvertingPDF Web App](https://quick-doc-tool.onrender.com) – a simple and modern tool for handling everyday PDF tasks like merging, splitting, and more.
 
-**URL**: https://lovable.dev/projects/400faf3c-76e0-4177-8452-49443cf7630a
+## 🚀 Features
 
-## How can I edit this code?
+- 🔗 Merge PDFs into one
+- ✂️ Split PDFs into smaller files
+- 🗜️ Compress PDFs
+- 📝 Edit PDFs
+- 🖼️ PDF → JPG
+- 📄 PDF → Word
+- ⚡ Fast & lightweight
 
-There are several ways of editing your application.
+## 🛠️ Tech Stack
 
-**Use Lovable**
+- 🎨 **Frontend:** ![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
+- 🖥️ **Backend:** [ConvertingPDF-server](https://github.com/younes-alhyan/convertingpdf-server) (collaboration with [@younes-alhyan](https://github.com/younes-alhyan))
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/400faf3c-76e0-4177-8452-49443cf7630a) and start prompting.
+## 📖 How to Use (Development)
 
-Changes made via Lovable will be committed automatically to this repo.
+Clone the repo and run it locally:
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+# Clone frontend
+git clone https://github.com/lamgaldamtechnology/convertingpdf.git
+cd convertingpdf
 ```
 
-**Edit a file directly in GitHub**
+```bash
+# Install dependencies
+npm install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/400faf3c-76e0-4177-8452-49443cf7630a) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```bash
+# Start development server
+npm run dev
+```
