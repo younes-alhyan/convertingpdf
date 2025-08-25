@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -9,13 +8,13 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/auth');
+      // Redirect using plain window.location.href
+      window.location.href = '/auth';
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   if (loading) {
     return (

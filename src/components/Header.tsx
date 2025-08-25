@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { FileText, Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -21,32 +20,32 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
+        <a href="/" className="flex items-center space-x-2">
           <div className="flex items-center justify-center w-10 h-10 bg-gradient-primary rounded-lg shadow-soft">
             <FileText className="h-6 w-6 text-primary-foreground" />
           </div>
           <span className="font-bold text-xl text-foreground">convertingpdf</span>
-        </Link>
+        </a>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-foreground hover:text-primary transition-colors font-medium">
+          <a href="/" className="text-foreground hover:text-primary transition-colors font-medium">
             Home
-          </Link>
+          </a>
           {user && (
-            <Link to="/dashboard" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+            <a href="/dashboard" className="text-muted-foreground hover:text-primary transition-colors font-medium">
               Dashboard
-            </Link>
+            </a>
           )}
           <a href="/#tools" className="text-muted-foreground hover:text-primary transition-colors font-medium">
             Tools
           </a>
-          <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+          <a href="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
             About
-          </Link>
-          <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+          </a>
+          <a href="/contact" className="text-muted-foreground hover:text-primary transition-colors font-medium">
             Contact
-          </Link>
+          </a>
         </nav>
 
         {/* Auth Section */}
@@ -61,10 +60,10 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard">
+                  <a href="/dashboard">
                     <User className="mr-2 h-4 w-4" />
                     Dashboard
-                  </Link>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   <span className="mr-2 text-xs">●</span>
@@ -80,10 +79,10 @@ const Header = () => {
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <Link to="/auth">Login</Link>
+                <a href="/auth">Login</a>
               </Button>
               <Button variant="default" asChild>
-                <Link to="/auth">Sign Up</Link>
+                <a href="/auth">Sign Up</a>
               </Button>
             </>
           )}
@@ -104,23 +103,23 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden border-t border-border bg-background">
           <nav className="container py-4 space-y-4">
-            <Link to="/" className="block text-foreground hover:text-primary transition-colors font-medium">
+            <a href="/" className="block text-foreground hover:text-primary transition-colors font-medium">
               Home
-            </Link>
+            </a>
             {user && (
-              <Link to="/dashboard" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
+              <a href="/dashboard" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
                 Dashboard
-              </Link>
+              </a>
             )}
             <a href="/#tools" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
               Tools
             </a>
-            <Link to="/about" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
+            <a href="/about" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
               About
-            </Link>
-            <Link to="/contact" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
+            </a>
+            <a href="/contact" className="block text-muted-foreground hover:text-primary transition-colors font-medium">
               Contact
-            </Link>
+            </a>
             <div className="flex flex-col space-y-2 pt-4 border-t border-border">
               {user ? (
                 <>
@@ -139,10 +138,10 @@ const Header = () => {
               ) : (
                 <>
                   <Button variant="ghost" className="justify-start" asChild>
-                    <Link to="/auth">Login</Link>
+                    <a href="/auth">Login</a>
                   </Button>
                   <Button variant="default" className="justify-start" asChild>
-                    <Link to="/auth">Sign Up</Link>
+                    <a href="/auth">Sign Up</a>
                   </Button>
                 </>
               )}
