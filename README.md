@@ -14,7 +14,7 @@
 
 ## 🛠️ Tech Stack
 
-- 🎨 **Frontend:** [![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/) 
+- 🎨 **Frontend:** [![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 - 🖥️ **Backend:** [ConvertingPDF-server](https://github.com/younes-alhyan/convertingpdf-server) (collaboration with [@younes-alhyan](https://github.com/younes-alhyan))
 
