@@ -31,6 +31,8 @@ import {
   Loader2,
   Settings,
 } from "lucide-react";
+import type { FileEntry } from "@/hooks/useIndedxDB";
+import { type useFileProps, useFile } from "@/hooks/useFileHook";
 
 interface SplitFile {
   filename: string;
@@ -39,23 +41,15 @@ interface SplitFile {
   url: string;
 }
 
-interface Result {
-  conversion_id: string;
-  converted_filename: string;
-  converted_file_size: number;
-  downloadUrl: string;
-  status: string;
-  message: string;
-}
-
 const SplitPDF = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<FileEntry | null>(null);
   const [splitFiles, setsplitFiles] = useState<SplitFile[]>([]);
   const [splitType, setSplitType] = useState("pages");
   const [splitValue, setSplitValue] = useState("1");
+  const ConvertFile = useFile();
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,49 +95,23 @@ const SplitPDF = () => {
       return;
     }
 
-    setIsProcessing(true);
-    setProgress(10);
-    setResult(null);
-
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("splitType", splitType);
       formData.append("splitValue", splitValue);
 
-      setProgress(30);
+      const FileProps: useFileProps = {
+        original_file: selectedFile,
+        formData,
+        setResult,
+        setProgress,
+        conversion_type: "split-pdf",
+      };
 
-      const response = await fetch(
-        "https://convertingpdf.onrender.com/split-pdf",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      // TODO
+      const resultEntry = await ConvertFile(FileProps);
 
-      setProgress(70);
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Split failed");
-      }
-
-      const data = await response.json();
-
-      setResult(data);
-
-      const zipFile = await fetch(data.downloadUrl);
-
-      if (!zipFile.ok) {
-        const errText = await zipFile.text();
-        console.error("Download failed:", errText);
-        throw new Error(`Failed to fetch zip: ${zipFile.status}`);
-      }
-
-      const arrayBuffer = await zipFile.arrayBuffer();
-      const zip = await JSZip.loadAsync(arrayBuffer);
-
+      const zip = await JSZip.loadAsync(resultEntry.blob);
       const files: SplitFile[] = [];
       const ranges = splitType === "ranges" ? splitValue.split(",") : [];
       let pageIndex = 0;
@@ -382,7 +350,9 @@ const SplitPDF = () => {
               <CheckCircle className="h-5 w-5 text-success" />
               <span>Split Completed</span>
             </CardTitle>
-            <CardDescription>{result.message}</CardDescription>
+            <CardDescription>
+              Convertion Status : {result.status}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">

@@ -20,21 +20,15 @@ import {
   FileEdit,
   Info,
 } from "lucide-react";
-
-interface Result {
-  conversion_id: string;
-  converted_filename: string;
-  converted_file_size: number;
-  downloadUrl: string;
-  status: string;
-  message: string;
-}
+import type { FileEntry } from "@/hooks/useIndedxDB";
+import { type useFileProps, useFile } from "@/hooks/useFileHook";
 
 const PDFToWord = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<FileEntry | null>(null);
+  const ConvertFile = useFile();
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,35 +73,20 @@ const PDFToWord = () => {
       return;
     }
 
-    setIsProcessing(true);
-    setProgress(20);
-
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      setProgress(40);
+      const FileProps: useFileProps = {
+        original_file: selectedFile,
+        formData,
+        setResult,
+        setProgress,
+        conversion_type: "pdf-to-word",
+      };
 
-      const response = await fetch(
-        "https://convertingpdf.onrender.com/pdf-to-word",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      // TODO
-      
-      setProgress(70);
+      await ConvertFile(FileProps);
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.statusText}`);
-      }
-
-      // Expecting a Word file (.docx) as a blob
-      const data = await response.json();
-      setResult(data);
-
-      setProgress(100);
       toast({
         title: "Conversion Complete",
         description: `Your PDF has been converted to Word.`,
@@ -136,11 +115,7 @@ const PDFToWord = () => {
     });
     // Fetch the file as a blob
     try {
-      const response = await fetch(result.downloadUrl);
-      if (!response.ok) throw new Error("Failed to fetch file");
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(result.blob);
 
       const link = document.createElement("a");
       link.href = blobUrl;

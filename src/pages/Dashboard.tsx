@@ -24,18 +24,8 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-
-interface Conversion {
-  id: string;
-  original_filename: string;
-  converted_filename: string | null;
-  conversion_type: string;
-  status: string;
-  created_at: string;
-  completed_at: string | null;
-  file_size: number | null;
-  download_url: string | null;
-}
+import { type FileEntry } from "@/hooks/useIndedxDB";
+import { useIndexedDB } from "@/hooks/useIndedxDB";
 
 const tools = [
   {
@@ -83,31 +73,28 @@ const tools = [
 ];
 
 const Dashboard = () => {
-  const [conversions, setConversions] = useState<Conversion[]>([]);
+  const [conversions, setConversions] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getAllFileEntries, loadFileFromDB } = useIndexedDB();
 
   useEffect(() => {
-    fetchConversions();
-  }, []);
-
-  const fetchConversions = async () => {
-    // TODO
-  };
+    getAllFileEntries().then((entries) => setConversions(entries));
+    console.log("done");
+    setLoading(false);
+  }, [setConversions, getAllFileEntries, setLoading]);
 
   const sanitizeFilename = (name: string) =>
     name.replace(/[/\\?%*:|"<>]/g, "-").replace(/\s+/g, "_");
 
-  const download = async (downloadUrl: string, filename: string) => {
+  const download = async (conversion: FileEntry) => {
     try {
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error("Failed to fetch file");
-
-      const blob = await response.blob();
+      const id = conversion.id;
+      const blob = await loadFileFromDB(id);
       const url = URL.createObjectURL(blob);
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = sanitizeFilename(filename);
+      link.download = sanitizeFilename(conversion.converted_filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -270,12 +257,7 @@ const Dashboard = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() =>
-                                  download(
-                                    conversion.download_url,
-                                    conversion.converted_filename
-                                  )
-                                }
+                                onClick={() => download(conversion)}
                               >
                                 <Download className="h-4 w-4 mr-2" />
                                 Download

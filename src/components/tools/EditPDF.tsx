@@ -31,26 +31,20 @@ import {
   Square,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-interface Result {
-  conversion_id: string;
-  converted_filename: string;
-  converted_file_size: number;
-  downloadUrl: string;
-  status: string;
-  message: string;
-}
+import type { FileEntry } from "@/hooks/useIndedxDB";
+import { type useFileProps, useFile } from "@/hooks/useFileHook";
 
 const EditPDF = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<FileEntry | null>(null);
   const [editType, setEditType] = useState<string>("");
   const [textContent, setTextContent] = useState("");
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const ConvertFile = useFile();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -106,9 +100,6 @@ const EditPDF = () => {
       return;
     }
 
-    setIsProcessing(true);
-    setProgress(10);
-
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -139,23 +130,16 @@ const EditPDF = () => {
 
       formData.append("editData", JSON.stringify(editData));
 
-      const response = await fetch("https://convertingpdf.onrender.com/edit", {
-        method: "POST",
-        body: formData,
-      });
-      // TODO
-      
-      setProgress(70);
+      const FileProps: useFileProps = {
+        original_file: file,
+        formData,
+        setResult,
+        setProgress,
+        conversion_type: "edit",
+      };
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Compression failed");
-      }
+      await ConvertFile(FileProps);
 
-      const data = await response.json();
-
-      setResult(data);
-      setProgress(100);
       toast({
         title: "PDF edited successfully!",
         description: `Your edited PDF is ready for download`,
@@ -177,17 +161,14 @@ const EditPDF = () => {
   };
 
   const downloadFile = async () => {
-    if (!result || !result.downloadUrl) return;
+    if (!result || !result.blob) return;
     // Fetch the file as a blob
     toast({
       title: "Preparing download...",
       description: "Please wait while your PDF is being processed.",
     });
-    const response = await fetch(result.downloadUrl);
-    if (!response.ok) throw new Error("Failed to fetch file");
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(result.blob);
 
     const link = document.createElement("a");
     link.href = url;
@@ -469,7 +450,7 @@ const EditPDF = () => {
                 <div>
                   <p className="font-medium">{result.converted_filename}</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatFileSize(result.converted_file_size)} • {editType}
+                    {formatFileSize(result.file_size)} • {editType}
                   </p>
                 </div>
               </div>

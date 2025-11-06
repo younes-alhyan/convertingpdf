@@ -21,15 +21,8 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
-
-interface Result {
-  conversion_id: string;
-  converted_filename: string;
-  converted_file_size: number;
-  downloadUrl: string;
-  status: string;
-  message: string;
-}
+import { type FileEntry } from "@/hooks/useIndedxDB";
+import { type useFileProps, useFile } from "@/hooks/useFileHook";
 
 interface SelectedFile {
   file: File;
@@ -40,7 +33,8 @@ const MergePDF = () => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<FileEntry | null>(null);
+  const ConvertFile = useFile();
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,9 +78,6 @@ const MergePDF = () => {
       return;
     }
 
-    setIsProcessing(true);
-    setProgress(10);
-
     try {
       // Prepare form data
       const formData = new FormData();
@@ -94,28 +85,15 @@ const MergePDF = () => {
         formData.append("files", file);
       });
 
-      setProgress(30);
+      const FileProps: useFileProps = {
+        original_file: selectedFiles[0].file,
+        formData,
+        setResult,
+        setProgress,
+        conversion_type: "merge-pdf",
+      };
 
-      const response = await fetch(
-        "https://convertingpdf.onrender.com/merge-pdf",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      // TODO
-
-      setProgress(70);
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Merging failed");
-      }
-
-      const data = await response.json();
-      setResult(data);
-
-      setProgress(100);
+      await ConvertFile(FileProps);
 
       toast({
         title: "Success!",
@@ -138,17 +116,13 @@ const MergePDF = () => {
   };
 
   const downloadFile = async () => {
-    if (!result || !result.downloadUrl) return;
+    if (!result || !result.blob) return;
     toast({
       title: "Preparing download...",
       description: "Please wait while your PDF is being processed.",
     });
     // Fetch the file as a blob
-    const response = await fetch(result.downloadUrl);
-    if (!response.ok) throw new Error("Failed to fetch file");
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(result.blob);
 
     const link = document.createElement("a");
     link.href = url;
@@ -316,7 +290,7 @@ const MergePDF = () => {
                 <div>
                   <p className="font-medium">{result.converted_filename}</p>
                   <p className="text-sm text-muted-foreground">
-                    {(result.converted_file_size / (1024 * 1024)).toFixed(1)} MB
+                    {(result.file_size / (1024 * 1024)).toFixed(1)} MB
                   </p>
                 </div>
               </div>

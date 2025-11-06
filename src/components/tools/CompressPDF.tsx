@@ -25,7 +25,8 @@ import {
   Zap,
   Shield,
 } from "lucide-react";
-import { useIndexedDB, type FileEntry } from "@/hooks/useIndedxDB";
+import type { FileEntry } from "@/hooks/useIndedxDB";
+import { type useFileProps, useFile } from "@/hooks/useFileHook";
 
 const CompressPDF = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -35,7 +36,7 @@ const CompressPDF = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<FileEntry | null>(null);
-  const { saveFile } = useIndexedDB();
+  const ConvertFile = useFile();
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,70 +89,28 @@ const CompressPDF = () => {
       return;
     }
 
-    const created_at = new Date().toISOString();
-    let resultEntry: FileEntry = {
-      id: selectedFile.name,
-      original_filename: selectedFile.name,
-      converted_filename: null,
-      conversion_type: "compression",
-      status: "uploading",
-      created_at,
-      completed_at: null,
-      file_size: selectedFile.size,
-      blob: selectedFile,
-    };
-
-    setResult(resultEntry); // initial state
-    setProgress(10);
-
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("compressionLevel", compressionLevel);
 
-      setProgress(30);
-      resultEntry.status = "processing";
-      setResult({ ...resultEntry });
-
-      const response = await fetch("http://127.0.0.1:10000/compress-pdf", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Compression failed");
-      }
-
-      // get the Blob from response
-      const compressedBlob = await response.blob();
-      const completed_at = new Date().toISOString();
-
-      // fill the result
-      resultEntry = {
-        ...resultEntry,
-        converted_filename: selectedFile.name.replace(
-          ".pdf",
-          "_compressed.pdf"
-        ),
-        blob: compressedBlob,
-        status: "completed",
-        completed_at,
-        file_size: compressedBlob.size,
+      const FileProps: useFileProps = {
+        original_file: selectedFile,
+        formData,
+        setResult,
+        setProgress,
+        conversion_type: "compress-pdf",
       };
+
+      const resultEntry = await ConvertFile(FileProps); 
 
       const compressionRatio = Number(
         (
-          ((selectedFile.size - compressedBlob.size) / selectedFile.size) *
+          ((selectedFile.size - resultEntry.file_size) / selectedFile.size) *
           100
         ).toFixed(0)
       );
       setCompressionRatio(compressionRatio);
-      setResult(resultEntry);
-      setProgress(100);
-
-      // save file in localStorage + IndexedDB
-      await saveFile(resultEntry);
 
       toast({
         title: "Compression Complete",
@@ -159,9 +118,6 @@ const CompressPDF = () => {
       });
     } catch (err) {
       console.error(err);
-      resultEntry.status = "error";
-      setResult({ ...resultEntry });
-      setProgress(0);
 
       toast({
         title: "Compression Failed",
