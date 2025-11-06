@@ -25,15 +25,8 @@ import {
   Zap,
   Shield,
 } from "lucide-react";
+import { useIndexedDB, type FileEntry } from "@/hooks/useIndedxDB";
 
-interface Result {
-  conversion_id: string;
-  converted_filename: string;
-  converted_file_size: number;
-  downloadUrl: string;
-  status: string;
-  message: string;
-}
 const CompressPDF = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -41,7 +34,8 @@ const CompressPDF = () => {
   const [compressionLevel, setCompressionLevel] = useState<string>("medium");
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<FileEntry | null>(null);
+  const { saveFile } = useIndexedDB();
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,7 +88,20 @@ const CompressPDF = () => {
       return;
     }
 
-    setIsProcessing(true);
+    const created_at = new Date().toISOString();
+    let resultEntry: FileEntry = {
+      id: selectedFile.name,
+      original_filename: selectedFile.name,
+      converted_filename: null,
+      conversion_type: "compression",
+      status: "uploading",
+      created_at,
+      completed_at: null,
+      file_size: selectedFile.size,
+      blob: selectedFile,
+    };
+
+    setResult(resultEntry); // initial state
     setProgress(10);
 
     try {
@@ -103,39 +110,62 @@ const CompressPDF = () => {
       formData.append("compressionLevel", compressionLevel);
 
       setProgress(30);
+      resultEntry.status = "processing";
+      setResult({ ...resultEntry });
 
-      const response = await fetch("https://convertingpdf.onrender.com/compress-pdf", {
+      const response = await fetch("http://127.0.0.1:10000/compress-pdf", {
         method: "POST",
         body: formData,
       });
-      // TODO
-
-      setProgress(70);
 
       if (!response.ok) {
         const errData = await response.json();
         throw new Error(errData.error || "Compression failed");
       }
 
-      const data = await response.json();
+      // get the Blob from response
+      const compressedBlob = await response.blob();
+      const completed_at = new Date().toISOString();
 
-      setResult(data);
-      const compressionRatio = Math.round(
-        (1 - data.converted_file_size / (fileSize ?? 1)) * 100
+      // fill the result
+      resultEntry = {
+        ...resultEntry,
+        converted_filename: selectedFile.name.replace(
+          ".pdf",
+          "_compressed.pdf"
+        ),
+        blob: compressedBlob,
+        status: "completed",
+        completed_at,
+        file_size: compressedBlob.size,
+      };
+
+      const compressionRatio = Number(
+        (
+          ((selectedFile.size - compressedBlob.size) / selectedFile.size) *
+          100
+        ).toFixed(0)
       );
       setCompressionRatio(compressionRatio);
+      setResult(resultEntry);
       setProgress(100);
+
+      // save file in localStorage + IndexedDB
+      await saveFile(resultEntry);
 
       toast({
         title: "Compression Complete",
         description: "Your PDF was compressed successfully",
       });
-    } catch (error) {
-      console.error("Compression error:", error);
+    } catch (err) {
+      console.error(err);
+      resultEntry.status = "error";
+      setResult({ ...resultEntry });
+      setProgress(0);
+
       toast({
         title: "Compression Failed",
-        description:
-          error instanceof Error ? error.message : "Unexpected error",
+        description: (err as Error).message,
         variant: "destructive",
       });
     } finally {
@@ -145,17 +175,13 @@ const CompressPDF = () => {
   };
 
   const downloadFile = async () => {
-    if (!result || !result.downloadUrl) return;
+    if (!result || !result.blob) return;
     toast({
       title: "Preparing download...",
       description: "Please wait while your PDF is being processed.",
     });
     // Fetch the file as a blob
-    const response = await fetch(result.downloadUrl);
-    if (!response.ok) throw new Error("Failed to fetch file");
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(result.blob);
 
     const link = document.createElement("a");
     link.href = url;
@@ -361,7 +387,7 @@ const CompressPDF = () => {
               <div className="text-center p-4 rounded-lg bg-secondary/20">
                 <p className="text-sm text-muted-foreground">Compressed Size</p>
                 <p className="text-lg font-semibold">
-                  {formatFileSize(result.converted_file_size)}
+                  {formatFileSize(result.file_size)}
                 </p>
               </div>
               <div className="text-center p-4 rounded-lg bg-success/10">
@@ -379,7 +405,7 @@ const CompressPDF = () => {
                   <div>
                     <p className="font-medium">{result.converted_filename}</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatFileSize(result.converted_file_size)}
+                      {formatFileSize(result.file_size)}
                     </p>
                   </div>
                 </div>
@@ -394,7 +420,9 @@ const CompressPDF = () => {
             </div>
 
             <div className="bg-success/10 border border-success/20 rounded-lg p-4">
-              <p className="text-success font-medium">{result.message}</p>
+              <p className="text-success font-medium">
+                Convertion Status : {result.status}
+              </p>
             </div>
           </CardContent>
         </Card>
