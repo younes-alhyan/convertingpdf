@@ -57,7 +57,7 @@ export function useFile() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:10000/${conversion_type}`,
+        `https://convertingpdf-server.onrender.com/${conversion_type}`,
         {
           method: "POST",
           body: formData,

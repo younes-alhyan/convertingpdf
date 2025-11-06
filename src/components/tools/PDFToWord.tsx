@@ -21,7 +21,7 @@ import {
   Info,
 } from "lucide-react";
 import type { FileEntry } from "@/hooks/useIndedxDB";
-import { type useFileProps, useFile } from "@/hooks/useFileHook";
+import { type useFileProps, useFile } from "@/hooks/useFile";
 
 const PDFToWord = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

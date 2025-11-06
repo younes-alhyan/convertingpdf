@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { FileEntry } from "@/hooks/useIndedxDB";
-import { type useFileProps, useFile } from "@/hooks/useFileHook";
+import { type useFileProps, useFile } from "@/hooks/useFile";
 
 const EditPDF = () => {
   const [file, setFile] = useState<File | null>(null);

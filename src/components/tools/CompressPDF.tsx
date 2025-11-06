@@ -26,7 +26,7 @@ import {
   Shield,
 } from "lucide-react";
 import type { FileEntry } from "@/hooks/useIndedxDB";
-import { type useFileProps, useFile } from "@/hooks/useFileHook";
+import { type useFileProps, useFile } from "@/hooks/useFile";
 
 const CompressPDF = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

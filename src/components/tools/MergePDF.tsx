@@ -22,7 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { type FileEntry } from "@/hooks/useIndedxDB";
-import { type useFileProps, useFile } from "@/hooks/useFileHook";
+import { type useFileProps, useFile } from "@/hooks/useFile";
 
 interface SelectedFile {
   file: File;

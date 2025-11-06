@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import JSZip from "jszip";
 import type { FileEntry } from "@/hooks/useIndedxDB";
-import { type useFileProps, useFile } from "@/hooks/useFileHook";
+import { type useFileProps, useFile } from "@/hooks/useFile";
 
 interface ImageInterface {
   filename: string;
