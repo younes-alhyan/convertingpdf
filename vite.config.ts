@@ -12,7 +12,6 @@ export default defineConfig({
         index: resolve(__dirname, "index.html"),
         about: resolve(__dirname, "about.html"),
         contact: resolve(__dirname, "contact.html"),
-        auth: resolve(__dirname, "auth.html"),
         dashboard: resolve(__dirname, "dashboard.html"),
         "404": resolve(__dirname, "404.html"),
         // tools pages
