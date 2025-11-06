@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import {
   Upload,
@@ -38,7 +37,6 @@ interface SelectedFile {
 }
 
 const MergePDF = () => {
-  const { user, session } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -77,15 +75,6 @@ const MergePDF = () => {
   }, []);
 
   const mergePDFs = async () => {
-    if (!session) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to use this tool",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (selectedFiles.length < 2) {
       toast({
         title: "More Files Needed",
@@ -107,16 +96,14 @@ const MergePDF = () => {
 
       setProgress(30);
 
-      const token = session.token;
-
-      const response = await fetch("https://convertingpdf.onrender.com/merge-pdf", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        "https://convertingpdf.onrender.com/merge-pdf",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      // TODO
 
       setProgress(70);
 
@@ -153,9 +140,9 @@ const MergePDF = () => {
   const downloadFile = async () => {
     if (!result || !result.downloadUrl) return;
     toast({
-          title: "Preparing download...",
-          description: "Please wait while your PDF is being processed.",
-        });
+      title: "Preparing download...",
+      description: "Please wait while your PDF is being processed.",
+    });
     // Fetch the file as a blob
     const response = await fetch(result.downloadUrl);
     if (!response.ok) throw new Error("Failed to fetch file");
@@ -279,7 +266,7 @@ const MergePDF = () => {
           <div className="pt-4">
             <Button
               onClick={mergePDFs}
-              disabled={selectedFiles.length < 2 || isProcessing || !session}
+              disabled={selectedFiles.length < 2 || isProcessing}
               className="w-full"
               size="lg"
             >
@@ -295,12 +282,6 @@ const MergePDF = () => {
                 </>
               )}
             </Button>
-
-            {!session && (
-              <p className="text-sm text-muted-foreground text-center mt-2">
-                Please sign in to use this tool
-              </p>
-            )}
           </div>
 
           {/* Progress */}

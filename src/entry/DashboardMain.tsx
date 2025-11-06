@@ -5,7 +5,7 @@ import "@/App.css";
 import "@/index.css";
 
 createRoot(document.getElementById("root")!).render(
-  <PageLayout isProtected={false}>
+  <PageLayout>
     <Dashboard />
   </PageLayout>
 );

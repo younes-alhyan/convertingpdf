@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import {
   Upload,
@@ -32,7 +31,6 @@ interface Result {
 }
 
 const PDFToWord = () => {
-  const { user, session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -72,15 +70,6 @@ const PDFToWord = () => {
   }, []);
 
   const convertToWord = async () => {
-    if (!session) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to use this tool",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!selectedFile) {
       toast({
         title: "No File Selected",
@@ -94,24 +83,20 @@ const PDFToWord = () => {
     setProgress(20);
 
     try {
-      // Get JWT
-      const token = session?.token;
-      if (!token) throw new Error("No valid session");
-
       const formData = new FormData();
       formData.append("file", selectedFile);
 
       setProgress(40);
 
-      const response = await fetch("https://convertingpdf.onrender.com/pdf-to-word", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
-        },
-        body: formData,
-      });
-
+      const response = await fetch(
+        "https://convertingpdf.onrender.com/pdf-to-word",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      // TODO
+      
       setProgress(70);
 
       if (!response.ok) {
@@ -159,7 +144,7 @@ const PDFToWord = () => {
 
       const link = document.createElement("a");
       link.href = blobUrl;
-      
+
       link.download = result.converted_filename; // e.g. "MyFile.docx"
       document.body.appendChild(link);
       link.click();

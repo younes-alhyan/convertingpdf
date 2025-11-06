@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import {
   Upload,
@@ -50,7 +49,6 @@ interface Result {
 }
 
 const SplitPDF = () => {
-  const { user, session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -85,15 +83,6 @@ const SplitPDF = () => {
   }, []);
 
   const splitPDF = async () => {
-    if (!session) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to use this tool",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!selectedFile) {
       toast({
         title: "File Required",
@@ -117,17 +106,6 @@ const SplitPDF = () => {
     setResult(null);
 
     try {
-      const token = session?.token;
-
-      if (!token) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to use this tool",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("splitType", splitType);
@@ -139,13 +117,10 @@ const SplitPDF = () => {
         "https://convertingpdf.onrender.com/split-pdf",
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "X-User-ID": user.id,
-          },
           body: formData,
         }
       );
+      // TODO
 
       setProgress(70);
 
@@ -369,9 +344,7 @@ const SplitPDF = () => {
 
             <Button
               onClick={splitPDF}
-              disabled={
-                !selectedFile || isProcessing || !session || !splitValue.trim()
-              }
+              disabled={!selectedFile || isProcessing || !splitValue.trim()}
               className="w-full"
               size="lg"
             >
@@ -387,12 +360,6 @@ const SplitPDF = () => {
                 </>
               )}
             </Button>
-
-            {!session && (
-              <p className="text-sm text-muted-foreground text-center">
-                Please sign in to use this tool
-              </p>
-            )}
 
             {isProcessing && (
               <div className="space-y-2">

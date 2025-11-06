@@ -30,7 +30,6 @@ import {
   Image as ImageIcon,
   Square,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 interface Result {
@@ -52,7 +51,6 @@ const EditPDF = () => {
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const { user, session } = useAuth();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -108,14 +106,6 @@ const EditPDF = () => {
       return;
     }
 
-    if (!user || !session) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to edit PDFs",
-        variant: "destructive",
-      });
-      return;
-    }
     setIsProcessing(true);
     setProgress(10);
 
@@ -149,26 +139,12 @@ const EditPDF = () => {
 
       formData.append("editData", JSON.stringify(editData));
 
-      const token = session?.token;
-
-      if (!token) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to use this tool",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const response = await fetch("https://convertingpdf.onrender.com/edit", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
-        },
         body: formData,
       });
-
+      // TODO
+      
       setProgress(70);
 
       if (!response.ok) {

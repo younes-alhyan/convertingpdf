@@ -20,7 +20,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+
 const tools = [
   {
     icon: Combine,
@@ -79,12 +79,9 @@ const tools = [
 ];
 
 const AllToolsPage = () => {
-  const { user } = useAuth();
-
   const handleToolClick = (tool: (typeof tools)[0]) => {
-    if (tool.status === "available") {
-      window.location.href = tool.route;
-    }
+    if (tool.status !== "available") return;
+    window.location.href = tool.route;
   };
 
   const availableTools = tools.filter((tool) => tool.status === "available");
@@ -228,27 +225,6 @@ const AllToolsPage = () => {
               <p className="text-lg text-muted-foreground">
                 Choose any tool above to begin working with your PDF documents.
               </p>
-              {!user && (
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button
-                    size="lg"
-                    onClick={() => {
-                      window.location.href = "/auth";
-                    }}
-                  >
-                    Sign Up for Free
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => {
-                      window.location.href = "/";
-                    }}
-                  >
-                    Back to Home
-                  </Button>
-                </div>
-              )}
             </div>
           </section>
         </div>

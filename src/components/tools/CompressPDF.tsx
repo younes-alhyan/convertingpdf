@@ -9,10 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import {
   Upload,
@@ -37,7 +35,6 @@ interface Result {
   message: string;
 }
 const CompressPDF = () => {
-  const { user, session } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [compressionRatio, setCompressionRatio] = useState<number | null>(null);
@@ -88,15 +85,6 @@ const CompressPDF = () => {
   }, []);
 
   const compressPDF = async () => {
-    if (!session) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to use this tool",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!selectedFile) {
       toast({
         title: "No File Selected",
@@ -110,17 +98,6 @@ const CompressPDF = () => {
     setProgress(10);
 
     try {
-      const token = session?.token;
-
-      if (!token) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to use this tool",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("compressionLevel", compressionLevel);
@@ -129,12 +106,9 @@ const CompressPDF = () => {
 
       const response = await fetch("https://convertingpdf.onrender.com/compress-pdf", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "X-User-ID": user.id,
-        },
         body: formData,
       });
+      // TODO
 
       setProgress(70);
 

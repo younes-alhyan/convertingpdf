@@ -134,7 +134,7 @@ const ToolsSection = () => {
             variant="default"
             size="lg"
             onClick={() => {
-              window.location.href = "/tools";
+              window.location.href = "/tools/";
             }}
           >
             View All Tools
