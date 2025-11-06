@@ -1,26 +1,36 @@
+// vite.config.ts
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import { componentTagger } from "lovable-tagger";
+import react from "@vitejs/plugin-react";
+import { resolve } from "path";
 
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-    proxy: {
-      "/api": {
-        target: "http://localhost:10000",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    rollupOptions: {
+      input: {
+        // top-level pages
+        index: resolve(__dirname, "index.html"),
+        about: resolve(__dirname, "about.html"),
+        contact: resolve(__dirname, "contact.html"),
+        auth: resolve(__dirname, "auth.html"),
+        dashboard: resolve(__dirname, "dashboard.html"),
+        "404": resolve(__dirname, "404.html"),
+        // tools pages
+        tools: resolve(__dirname, "tools/index.html"),
+        merge: resolve(__dirname, "tools/merge.html"),
+        split: resolve(__dirname, "tools/split.html"),
+        compress: resolve(__dirname, "tools/compress.html"),
+        "pdf-to-jpg": resolve(__dirname, "tools/pdf-to-jpg.html"),
+        "pdf-to-word": resolve(__dirname, "tools/pdf-to-word.html"),
+        edit: resolve(__dirname, "tools/edit.html"),
       },
     },
+    outDir: "dist", // your build output
+    emptyOutDir: true,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(
-    Boolean
-  ),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": resolve(__dirname, "src"),
     },
   },
-}));
+});

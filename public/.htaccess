@@ -1,0 +1,19 @@
+# Enable mod_rewrite
+RewriteEngine On
+RewriteBase /
+
+# Serve existing files or directories directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Map clean URLs to .html files in root
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^([a-zA-Z0-9-_/]+)$ $1.html [L]
+
+# Map URLs inside tools folder
+RewriteCond %{DOCUMENT_ROOT}/tools/$1.html -f
+RewriteRule ^tools/([a-zA-Z0-9-_/]+)$ tools/$1.html [L]
+
+# Redirect all other requests to 404.html
+ErrorDocument 404 /404.html

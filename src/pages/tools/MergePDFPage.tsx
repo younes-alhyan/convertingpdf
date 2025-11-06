@@ -1,5 +1,4 @@
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MergePDF from "@/components/tools/MergePDF";
 
@@ -11,10 +10,10 @@ const MergePDFPage = () => {
         <div className="container px-4 py-4">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/">
+              <a href="/">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
-              </Link>
+              </a>
             </Button>
             <div className="h-4 w-px bg-border" />
             <h1 className="font-semibold text-lg">Merge PDF</h1>

@@ -20,7 +20,6 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 const tools = [
   {
@@ -81,11 +80,10 @@ const tools = [
 
 const AllToolsPage = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const handleToolClick = (tool: (typeof tools)[0]) => {
     if (tool.status === "available") {
-      navigate(tool.route);
+      window.location.href = tool.route;
     }
   };
 
@@ -232,13 +230,20 @@ const AllToolsPage = () => {
               </p>
               {!user && (
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" onClick={() => navigate("/auth")}>
+                  <Button
+                    size="lg"
+                    onClick={() => {
+                      window.location.href = "/auth";
+                    }}
+                  >
                     Sign Up for Free
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
-                    onClick={() => navigate("/")}
+                    onClick={() => {
+                      window.location.href = "/";
+                    }}
                   >
                     Back to Home
                   </Button>
