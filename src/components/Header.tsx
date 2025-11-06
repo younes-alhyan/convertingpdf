@@ -11,7 +11,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center space-x-2">
+        <a href="./" className="flex items-center space-x-2">
           <div className="flex items-center justify-center w-10 h-10 bg-gradient-primary rounded-lg shadow-soft">
             <FileText className="h-6 w-6 text-primary-foreground" />
           </div>
@@ -23,31 +23,31 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <a
-            href="/"
+            href="./"
             className="text-foreground hover:text-primary transition-colors font-medium"
           >
             Home
           </a>
           <a
-            href="/dashboard"
+            href="./dashboard"
             className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
             Dashboard
           </a>
           <a
-            href="/#tools"
+            href="./#tools"
             className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
             Tools
           </a>
           <a
-            href="/about"
+            href="./about"
             className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
             About
           </a>
           <a
-            href="/contact"
+            href="./contact"
             className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
             Contact
@@ -74,33 +74,33 @@ const Header = () => {
         <div className="md:hidden border-t border-border bg-background">
           <nav className="container py-4 space-y-4">
             <a
-              href="/"
+              href="./"
               className="block text-foreground hover:text-primary transition-colors font-medium"
             >
               Home
             </a>
 
             <a
-              href="/dashboard"
+              href="./dashboard"
               className="block text-muted-foreground hover:text-primary transition-colors font-medium"
             >
               Dashboard
             </a>
 
             <a
-              href="/#tools"
+              href="./#tools"
               className="block text-muted-foreground hover:text-primary transition-colors font-medium"
             >
               Tools
             </a>
             <a
-              href="/about"
+              href="./about"
               className="block text-muted-foreground hover:text-primary transition-colors font-medium"
             >
               About
             </a>
             <a
-              href="/contact"
+              href="./contact"
               className="block text-muted-foreground hover:text-primary transition-colors font-medium"
             >
               Contact
