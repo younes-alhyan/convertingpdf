@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const DB_NAME = "conversions";
 const STORE_NAME = "files";
@@ -13,7 +13,7 @@ export type FileEntry = {
   created_at: string;
   completed_at: string | null;
   file_size: number | null;
-  blob: Blob;
+  blob: Blob | null;
 };
 
 export const useIndexedDB = () => {
@@ -54,7 +54,7 @@ export const useIndexedDB = () => {
     });
   };
 
-  const loadFileToDB = (id: string): Promise<Blob | null> => {
+  const loadFileFromDB = (id: string): Promise<Blob | null> => {
     return new Promise((resolve, reject) => {
       if (!db) return resolve(null);
 
@@ -70,24 +70,12 @@ export const useIndexedDB = () => {
     });
   };
 
-  const deleteFileToDB = (id: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (!db) return reject("DB not initialized");
-
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      const store = tx.objectStore(STORE_NAME);
-      const request = store.delete(id);
-
-      request.onsuccess = () => resolve();
-      request.onerror = (e) => reject((e.target as IDBRequest).error);
-    });
-  };
-
   // Local Storage utilities
   const saveFile = ({
     id,
     original_filename,
     converted_filename,
+    conversion_type,
     status,
     created_at,
     completed_at,
@@ -102,6 +90,7 @@ export const useIndexedDB = () => {
             id,
             original_filename,
             converted_filename,
+            conversion_type,
             status,
             created_at,
             completed_at,
@@ -115,5 +104,57 @@ export const useIndexedDB = () => {
     });
   };
 
-  return { saveFile };
+  const getAllFileEntries = useCallback(async () => {
+    const deleteFileFromDB = (id: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        if (!db) return reject("DB not initialized");
+
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.delete(id);
+
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject((e.target as IDBRequest).error);
+      });
+    };
+
+    const deleteFile = async (id: string) => {
+      localStorage.removeItem(id);
+      await deleteFileFromDB(id);
+    };
+
+    const getAllEntries = async () => {
+      const entries: FileEntry[] = [];
+      const now = Date.now();
+
+      const keys = Object.keys(localStorage);
+
+      for (const key of keys) {
+        const value = localStorage.getItem(key);
+        if (!value) continue;
+
+        try {
+          const fileEntry: FileEntry = JSON.parse(value);
+
+          if (
+            fileEntry.completed_at &&
+            now - new Date(fileEntry.completed_at).getTime() >= 3600_000
+          ) {
+            await deleteFile(key);
+            continue;
+          }
+
+          entries.push(fileEntry);
+        } catch {
+          continue;
+        }
+      }
+
+      return entries;
+    };
+
+    return getAllEntries();
+  }, [db]);
+
+  return { saveFile, getAllFileEntries, loadFileFromDB };
 };
