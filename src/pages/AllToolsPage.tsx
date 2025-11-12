@@ -1,4 +1,3 @@
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +18,7 @@ import {
   ArrowRight,
   CheckCircle,
   Clock,
+  ArrowLeft,
 } from "lucide-react";
 
 const tools = [
@@ -29,7 +29,7 @@ const tools = [
       "Combine multiple PDF files into a single document easily and quickly.",
     color: "text-primary",
     status: "available",
-    route: "/tools/merge",
+    route: "merge",
   },
   {
     icon: Scissors,
@@ -38,7 +38,7 @@ const tools = [
       "Separate pages from your PDF or split one file into multiple documents.",
     color: "text-accent",
     status: "available",
-    route: "/tools/split",
+    route: "split",
   },
   {
     icon: Minimize2,
@@ -47,7 +47,7 @@ const tools = [
       "Reduce file size while maintaining quality for easier sharing and storage.",
     color: "text-warning",
     status: "available",
-    route: "/tools/compress",
+    route: "compress",
   },
   {
     icon: FileText,
@@ -56,7 +56,7 @@ const tools = [
       "Convert PDF documents to editable Word files with precision formatting.",
     color: "text-primary",
     status: "available",
-    route: "/tools/pdf-to-word",
+    route: "pdf-to-word",
   },
   {
     icon: Image,
@@ -65,7 +65,7 @@ const tools = [
       "Extract images from PDF or convert PDF pages to high-quality images.",
     color: "text-accent",
     status: "available",
-    route: "/tools/pdf-to-jpg",
+    route: "pdf-to-jpg",
   },
   {
     icon: Edit3,
@@ -74,7 +74,7 @@ const tools = [
       "Add text, images, signatures, and annotations to your PDF documents.",
     color: "text-success",
     status: "available",
-    route: "/tools/edit",
+    route: "edit",
   },
 ];
 
@@ -88,9 +88,16 @@ const AllToolsPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="py-24">
         <div className="container px-4">
+          <div className="mb-4">
+            <Button variant="ghost" size="sm" asChild>
+              <a href="../">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </a>
+            </Button>
+          </div>
           {/* Header */}
           <div className="max-w-4xl mx-auto text-center space-y-6 mb-16">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">

@@ -21,6 +21,7 @@ import {
   Minimize2,
   Image,
   Edit3,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -33,42 +34,42 @@ const tools = [
     title: "Merge PDF",
     icon: Combine,
     description: "Combine multiple PDFs",
-    path: "./tools/merge",
+    path: "tools/merge",
   },
   {
     id: "split",
     title: "Split PDF",
     icon: Scissors,
     description: "Split PDF into pages",
-    path: "./tools/split",
+    path: "tools/split",
   },
   {
     id: "compress",
     title: "Compress PDF",
     icon: Minimize2,
     description: "Reduce file size",
-    path: "./tools/compress",
+    path: "tools/compress",
   },
   {
     id: "pdf-to-word",
     title: "PDF to Word",
     icon: FileText,
     description: "Convert to Word document",
-    path: "./tools/pdf-to-word",
+    path: "tools/pdf-to-word",
   },
   {
     id: "pdf-to-jpg",
     title: "PDF to JPG",
     icon: Image,
     description: "Convert to images",
-    path: "./tools/pdf-to-jpg",
+    path: "tools/pdf-to-jpg",
   },
   {
     id: "edit",
     title: "Edit PDF",
     icon: Edit3,
     description: "Add text and annotations",
-    path: "./tools/edit",
+    path: "tools/edit",
   },
 ];
 
@@ -138,6 +139,12 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container px-4 py-8">
         <div className="mb-8">
+          <Button variant="ghost" size="sm" className="mb-4" asChild>
+            <a href="./">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </a>
+          </Button>
           <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
           <p className="text-muted-foreground">
             Welcome back! Manage your PDF conversions and access your tools.

@@ -104,17 +104,17 @@ const ToolsSection = () => {
                   className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                   onClick={() => {
                     if (tool.title === "Merge PDF") {
-                      window.location.href = "./tools/merge";
+                      window.location.href = "tools/merge";
                     } else if (tool.title === "Split PDF") {
-                      window.location.href = "./tools/split";
+                      window.location.href = "tools/split";
                     } else if (tool.title === "PDF to JPG") {
-                      window.location.href = "./tools/pdf-to-jpg";
+                      window.location.href = "tools/pdf-to-jpg";
                     } else if (tool.title === "Compress PDF") {
-                      window.location.href = "./tools/compress";
+                      window.location.href = "tools/compress";
                     } else if (tool.title === "PDF to Word") {
-                      window.location.href = "./tools/pdf-to-word";
+                      window.location.href = "tools/pdf-to-word";
                     } else if (tool.title === "Edit PDF") {
-                      window.location.href = "./tools/edit";
+                      window.location.href = "tools/edit";
                     } else {
                       alert(
                         `${tool.title} tool coming soon! Backend integration in progress.`
@@ -134,7 +134,7 @@ const ToolsSection = () => {
             variant="default"
             size="lg"
             onClick={() => {
-              window.location.href = "./tools/";
+              window.location.href = "tools/";
             }}
           >
             View All Tools

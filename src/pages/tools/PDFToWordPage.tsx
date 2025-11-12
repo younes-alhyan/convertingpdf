@@ -10,7 +10,7 @@ const PDFToWordPage = () => {
         <div className="container px-4 py-4">
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" asChild>
-              <a href="./">
+              <a href="../">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
               </a>

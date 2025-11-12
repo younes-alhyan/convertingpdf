@@ -35,7 +35,7 @@ const Header = () => {
             Dashboard
           </a>
           <a
-            href="./#tools"
+            href="./tools/"
             className="text-muted-foreground hover:text-primary transition-colors font-medium"
           >
             Tools
@@ -88,7 +88,7 @@ const Header = () => {
             </a>
 
             <a
-              href="./#tools"
+              href="./tools/"
               className="block text-muted-foreground hover:text-primary transition-colors font-medium"
             >
               Tools

@@ -75,7 +75,7 @@ const About = () => {
               <Button
                 size="lg"
                 variant="secondary"
-                onClick={() => (window.location.href = "/auth")}
+                onClick={() => (window.location.href = "./")}
               >
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -84,7 +84,7 @@ const About = () => {
                 size="lg"
                 variant="outline"
                 className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
-                onClick={() => (window.location.href = "/")}
+                onClick={() => (window.location.href = "tools/")}
               >
                 View Our Tools
               </Button>
@@ -204,17 +204,14 @@ const About = () => {
               document needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-              <Button
-                size="lg"
-                onClick={() => (window.location.href = "/auth")}
-              >
+              <Button size="lg" onClick={() => (window.location.href = "./")}>
                 Start Converting Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => (window.location.href = "/")}
+                onClick={() => (window.location.href = "tools/")}
               >
                 Explore Tools
               </Button>
