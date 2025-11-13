@@ -46,7 +46,7 @@ export function useFile() {
       original_filename: original_file.name,
       converted_filename: null,
       conversion_type,
-      status: "uploading",
+      status: "pending",
       created_at,
       completed_at: null,
       file_size: original_file.size,
@@ -99,7 +99,7 @@ export function useFile() {
       await saveFile(resultEntry);
       return resultEntry;
     } catch (err) {
-      resultEntry.status = "error";
+      resultEntry.status = "failed";
       setResult({ ...resultEntry });
       setProgress(0);
       throw err;
